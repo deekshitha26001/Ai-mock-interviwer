@@ -12,13 +12,23 @@ export const metadata: Metadata = {
 
 const outfit = Outfit({ subsets: ['latin'] });
 
+const clerkPublishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY ||
+  "pk_test_Y2xlcmstcHVibGlzaGFibGUta2V5LWZhbGxiYWNrJG";
+
+if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && typeof window !== "undefined") {
+  console.warn(
+    "[Clerk Warning]: NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY is missing in environment variables. Please configure NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY in Vercel project settings."
+  );
+}
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
+    <ClerkProvider publishableKey={clerkPublishableKey}>
       <html lang="en" suppressHydrationWarning={true}>
         <body className={outfit.className}>
           <ConvexClientProvider>
