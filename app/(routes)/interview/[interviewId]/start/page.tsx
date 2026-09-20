@@ -4,9 +4,8 @@ import axios from 'axios';
 import { useConvex, useMutation, useQuery } from 'convex/react';
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
-import { GenericAgoraSDK } from 'akool-streaming-avatar-sdk';
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
+import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2, Camera, CameraOff, Eye, ShieldCheck, Edit3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { FeedbackInfo } from '@/app/(routes)/dashboard/_components/FeedbackDialog';
 import { Input } from '@/components/ui/input';
@@ -14,6 +13,8 @@ import { Input } from '@/components/ui/input';
 export type InterviewData = {
     jobTitle: string | null,
     jobDescription: string | null,
+    techStack?: string | null,
+    experienceLevel?: string | null,
     interviewQuestions: InterviewQuestions[],
     userId: string | null,
     _id: string,
@@ -32,9 +33,6 @@ type Messages = {
     text: string
 }
 
-const CONTAINER_ID = 'akool-avatar-container';
-const AVATAR_ID = 'dvp_Tristan_cloth2_1080P';
-
 export default function StartInterview() {
     const params = useParams();
     const interviewId = params?.interviewId as string;
@@ -45,15 +43,20 @@ export default function StartInterview() {
     const [errorMsg, setErrorMsg] = useState<string | null>(null);
     const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
 
-    const videoContainerRef = useRef<HTMLDivElement>(null);
     const [micOn, setMicOn] = useState(false);
-    const [agoraSdk, setAgoraSdk] = useState<GenericAgoraSDK | null>(null);
+    const [cameraOn, setCameraOn] = useState(true);
     const [joined, setJoined] = useState(false);
     const [loadingCall, setLoadingCall] = useState(false);
     const [messages, setMessages] = useState<Messages[]>([]);
     const [userInputText, setUserInputText] = useState("");
-    const [usingFallbackMode, setUsingFallbackMode] = useState(false);
     const [isListening, setIsListening] = useState(false);
+
+    // Camera Framing & Face Detection Signals
+    const [faceSignal, setFaceSignal] = useState<string>("Face Centered");
+    const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null);
+
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const mediaStreamRef = useRef<MediaStream | null>(null);
 
     const convex = useConvex();
     const updateFeedback = useMutation(api.Interview.UpdateFeedback);
@@ -63,6 +66,15 @@ export default function StartInterview() {
         api.Interview.GetInterviewQuestions,
         interviewId ? { interviewRecordId: interviewId as any } : "skip"
     );
+
+    // Clean up tracks on unmount
+    useEffect(() => {
+        return () => {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getTracks().forEach(track => track.stop());
+            }
+        };
+    }, []);
 
     useEffect(() => {
         if (!interviewId) {
@@ -84,9 +96,8 @@ export default function StartInterview() {
         }
 
         setErrorMsg(null);
-        console.log("Convex Interview Record:", rawRecord);
 
-        // Normalize & parse questions from various formats
+        // Parse questions from various schema forms
         let parsedQuestions: InterviewQuestions[] = [];
         const rawQ = rawRecord.interviewQuestions;
 
@@ -114,20 +125,18 @@ export default function StartInterview() {
                     });
                 }
             } catch (e) {
-                console.error("Failed to parse JSON string of interview questions:", e);
+                console.error("Failed to parse JSON string of questions:", e);
             }
         }
 
-        // Fallback default questions if empty
         if (parsedQuestions.length === 0) {
             const role = rawRecord.jobTitle || 'Software Engineer';
             parsedQuestions = [
                 { question: `Tell me about yourself and your experience relevant to ${role}.`, answer: "Overview of your background and key skills." },
-                { question: `What core technical tools or frameworks do you use as a ${role}?`, answer: "Primary skills, libraries, and methodologies." },
+                { question: `What technical frameworks or tools do you use most frequently as a ${role}?`, answer: "Primary skills, libraries, and methodologies." },
                 { question: "Describe a difficult technical challenge you solved recently.", answer: "Problem statement, solution, and final result." },
-                { question: "How do you handle changing priorities and tight deadlines?", answer: "Prioritization, communication, and flexibility." }
+                { question: "How do you handle changing project requirements and tight deadlines?", answer: "Prioritization, communication, and flexibility." }
             ];
-            toast.info("Using standard generated questions for this role.");
         }
 
         setInterviewData({
@@ -151,110 +160,105 @@ export default function StartInterview() {
         }
     };
 
-    // Browser Speech Recognition toggle
-    const toggleSpeechRecognition = () => {
-        if (typeof window === 'undefined') return;
-        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-
-        if (!SpeechRecognition) {
-            toast.info("Voice recognition not supported in this browser. Please type your response.");
-            return;
-        }
-
-        if (isListening) {
-            setIsListening(false);
-            setMicOn(false);
-            toast.info("Microphone off.");
-            return;
-        }
-
+    // Camera initializer
+    const startCamera = async () => {
+        if (!cameraOn) return;
         try {
-            const recognition = new SpeechRecognition();
-            recognition.continuous = false;
-            recognition.interimResults = false;
-            recognition.lang = 'en-US';
-
-            recognition.onstart = () => {
-                setIsListening(true);
-                setMicOn(true);
-                toast.success("Listening... Speak your answer now.");
-            };
-
-            recognition.onresult = (event: any) => {
-                const speechResult = event.results[0][0].transcript;
-                if (speechResult) {
-                    setUserInputText(speechResult);
-                    toast.success(`Captured: "${speechResult}"`);
-                }
-                setIsListening(false);
-                setMicOn(false);
-            };
-
-            recognition.onerror = (err: any) => {
-                console.warn("Speech recognition error:", err);
-                setIsListening(false);
-                setMicOn(false);
-                toast.error("Could not capture audio. Please type your answer.");
-            };
-
-            recognition.onend = () => {
-                setIsListening(false);
-                setMicOn(false);
-            };
-
-            recognition.start();
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            mediaStreamRef.current = stream;
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+            setCameraPermissionError(null);
         } catch (e) {
-            console.error("Speech recognition error:", e);
-            setIsListening(false);
-            setMicOn(false);
+            console.warn("Camera init warning:", e);
+            setCameraPermissionError("Camera disabled / unavailable. Video is optional.");
+        }
+    };
+
+    const toggleCamera = () => {
+        if (cameraOn) {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getVideoTracks().forEach(t => t.stop());
+            }
+            setCameraOn(false);
+            toast.info("Camera turned off. You can continue with voice/text.");
+        } else {
+            setCameraOn(true);
+            startCamera();
         }
     };
 
     // Connect Call handler
     const StartConversation = async () => {
         setLoadingCall(true);
+
+        await startCamera();
+
         const questionsList = interviewData?.interviewQuestions || [];
         const firstQ = questionsList[0]?.question || "Tell me about yourself and your background.";
 
-        // Attempt Akool streaming avatar if credentials available
-        try {
-            const res = await axios.post('/api/akool-session', {
-                avatar_id: AVATAR_ID,
-                knowledge_id: null
-            });
-
-            const credentials = res?.data?.data?.credentials;
-            if (credentials && agoraSdk) {
-                await agoraSdk.joinChannel({
-                    agora_app_id: credentials.agora_app_id,
-                    agora_channel: credentials.agora_channel,
-                    agora_token: credentials.agora_token,
-                    agora_uid: credentials.agora_uid
-                });
-                await agoraSdk.joinChat({ vid: "female_en_1", lang: "en", mode: 2 });
-                await agoraSdk.sendMessage(`Start question: ${firstQ}`);
-                setJoined(true);
-                setUsingFallbackMode(false);
-                toast.success("Connected to AI Recruiter Avatar!");
-                setLoadingCall(false);
-                return;
-            }
-        } catch (err) {
-            console.log("Akool avatar credentials missing or inactive. Running Interactive Recruiter Mode.");
-        }
-
-        // Reliable Interactive AI Recruiter Mode
-        setUsingFallbackMode(true);
         setJoined(true);
         setCurrentQuestionIndex(0);
 
-        const welcomeMsg = `Welcome to your AI Mock Interview for ${interviewData?.jobTitle || 'this position'}. Let's begin with Question 1: ${firstQ}`;
+        const welcomeMsg = `Welcome to your MAPD AI Mock Interview for ${interviewData?.jobTitle || 'this position'}. Question 1: ${firstQ}`;
         setMessages([
             { from: 'bot', text: welcomeMsg }
         ]);
         speakText(welcomeMsg);
-        toast.info("AI Interview Call Connected!");
+        toast.info("AI Interview Connected!");
         setLoadingCall(false);
+    };
+
+    // Speech recognition toggle with transcript editing
+    const toggleSpeechRecognition = () => {
+        if (typeof window === 'undefined') return;
+        const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+        if (!SpeechRecognition) {
+            toast.info("Speech recognition not supported in this browser. Please type your response.");
+            return;
+        }
+
+        if (isListening) {
+            setIsListening(false);
+            return;
+        }
+
+        try {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = false;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onstart = () => {
+                setIsListening(true);
+                toast.success("Listening... Speak now. You can edit the text before sending.");
+            };
+
+            recognition.onresult = (event: any) => {
+                const speechResult = Array.from(event.results)
+                    .map((r: any) => r[0].transcript)
+                    .join('');
+                if (speechResult) {
+                    setUserInputText(speechResult);
+                }
+            };
+
+            recognition.onerror = () => {
+                setIsListening(false);
+                toast.error("Could not capture speech. Please type your answer.");
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+            };
+
+            recognition.start();
+        } catch (e) {
+            console.error("Speech recognition error:", e);
+            setIsListening(false);
+        }
     };
 
     // Send Answer Handler
@@ -278,7 +282,7 @@ export default function StartInterview() {
             setMessages(updatedMessages);
             speakText(botReply);
         } else {
-            const endMsg = "Excellent! You have answered all interview questions. Click 'End Call' to generate your performance evaluation report.";
+            const endMsg = "Excellent! You have answered all interview questions. Click 'End Call' to generate your performance feedback report.";
             updatedMessages.push({ from: 'bot', text: endMsg });
             setMessages(updatedMessages);
             speakText(endMsg);
@@ -287,12 +291,19 @@ export default function StartInterview() {
     };
 
     const leaveConversation = async () => {
+        if (!window.confirm("Are you sure you want to end the interview and generate your performance report?")) return;
+
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
             window.speechSynthesis.cancel();
         }
+        if (mediaStreamRef.current) {
+            mediaStreamRef.current.getTracks().forEach(track => track.stop());
+        }
         setJoined(false);
         setMicOn(false);
+        setCameraOn(false);
         setIsListening(false);
+
         await GenerateFeedback();
     };
 
@@ -302,8 +313,10 @@ export default function StartInterview() {
             const result = await axios.post('/api/interview-feedback', {
                 messages: messages.length > 0 ? messages : [
                     { from: 'bot', text: 'Tell me about yourself.' },
-                    { from: 'user', text: 'I am a full-stack developer with experience building Next.js apps.' }
-                ]
+                    { from: 'user', text: 'I am a software engineer focused on building clean full-stack web applications.' }
+                ],
+                jobTitle: interviewData?.jobTitle,
+                techStack: interviewData?.techStack
             });
 
             console.log("Evaluation report:", result.data);
@@ -315,21 +328,22 @@ export default function StartInterview() {
             }
 
             toast.success('Performance evaluation complete!');
-            router.replace('/dashboard');
+            router.replace(`/interview/${interviewId}/feedback`);
         } catch (err) {
             console.error("Error saving feedback:", err);
-            toast.error("Redirecting to dashboard...");
-            router.replace('/dashboard');
+            toast.error("Redirecting to feedback page...");
+            router.replace(`/interview/${interviewId}/feedback`);
         }
     };
 
     const questionsList = interviewData?.interviewQuestions || [];
+    const currentQ = questionsList[currentQuestionIndex];
 
     if (loadingData) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen bg-slate-50 dark:bg-slate-950 p-6">
                 <Loader2 className="w-10 h-10 animate-spin text-indigo-600 mb-4" />
-                <h2 className="text-lg font-semibold text-slate-700 dark:text-slate-300">Loading interview session data...</h2>
+                <h2 className="text-sm font-semibold text-slate-700 dark:text-slate-300">Loading interview session data...</h2>
             </div>
         );
     }
@@ -341,7 +355,7 @@ export default function StartInterview() {
                     <AlertCircle size={32} />
                 </div>
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Interview Session Error</h2>
-                <p className="text-sm text-slate-500 dark:text-slate-400 max-w-md mb-6">{errorMsg}</p>
+                <p className="text-sm text-slate-500 max-w-md mb-6">{errorMsg}</p>
                 <Button onClick={() => router.push('/dashboard')}>
                     <ArrowLeft className="mr-2 w-4 h-4" /> Back to Dashboard
                 </Button>
@@ -350,183 +364,233 @@ export default function StartInterview() {
     }
 
     return (
-        <div className='flex flex-col lg:flex-row w-full min-h-screen bg-slate-50 dark:bg-slate-950 p-4 lg:p-6 gap-6'>
-            {/* Left Column: Video Stage, Call Controls & Question List */}
-            <div className='flex flex-col items-center lg:w-2/3 space-y-6'>
-                <div className='w-full flex justify-between items-center bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm'>
-                    <div>
-                        <h2 className='text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2'>
-                            <Sparkles className="w-5 h-5 text-indigo-500" />
-                            {interviewData?.jobTitle || "AI Technical Interview"}
-                        </h2>
-                        <p className='text-xs text-slate-500 dark:text-slate-400 mt-1'>
-                            {interviewData?.jobDescription ? `${interviewData.jobDescription.slice(0, 90)}...` : "Interactive AI Recruiter Session"}
-                        </p>
-                    </div>
-                    <span className="px-3 py-1 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-semibold rounded-full border border-emerald-500/20">
-                        {questionsList.length} Questions Loaded
-                    </span>
+        <div className="max-w-7xl mx-auto py-6 px-4 md:px-8 min-h-[calc(100vh-80px)] space-y-6">
+            {/* Top Bar */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white dark:bg-slate-900 p-4 md:px-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
+                <div>
+                    <h1 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-indigo-500" />
+                        {interviewData?.jobTitle || "AI Technical Interview"}
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Question {currentQuestionIndex + 1} of {questionsList.length} • MAPD Multi-Metric Evaluator
+                    </p>
                 </div>
 
-                {/* Avatar Stage */}
-                <div
-                    ref={videoContainerRef}
-                    id={CONTAINER_ID}
-                    className='w-full max-w-[640px] h-[360px] md:h-[420px] rounded-2xl overflow-hidden border border-slate-200 dark:border-slate-800 bg-slate-900 shadow-lg flex flex-col items-center justify-center relative text-white'
-                >
+                <div className="flex items-center gap-3">
                     {!joined ? (
-                        <div className='flex flex-col items-center text-center p-6 space-y-4'>
-                            <div className='w-20 h-20 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center shadow-inner'>
-                                <User size={40} className='text-slate-400' />
-                            </div>
-                            <h3 className='text-lg font-medium text-slate-200'>Ready to start your interview?</h3>
-                            <p className='text-xs text-slate-400 max-w-sm'>
-                                Click "Connect Call" below to begin your real-time AI interview session.
-                            </p>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center justify-center space-y-3 text-center p-6">
-                            <div className="w-24 h-24 rounded-full bg-indigo-500/20 border-2 border-indigo-400 animate-pulse flex items-center justify-center">
-                                <Volume2 size={44} className="text-indigo-400" />
-                            </div>
-                            <p className="text-sm font-semibold text-indigo-300">AI Recruiter Connected</p>
-                            <p className="text-xs text-slate-400">
-                                {isListening ? "Listening to your voice..." : "Speak or type your answer in the box on the right"}
-                            </p>
-                        </div>
-                    )}
-                </div>
-
-                {/* Call Controls */}
-                <div className="flex items-center gap-4">
-                    {!joined ? (
-                        <button
+                        <Button
                             onClick={StartConversation}
-                            disabled={loadingCall || loadingData}
-                            className="flex items-center px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-full shadow-lg transition duration-200 disabled:opacity-50 cursor-pointer"
+                            disabled={loadingCall}
+                            className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-full shadow-md text-xs px-5 cursor-pointer"
                         >
-                            <PhoneCall className="mr-2 w-5 h-5" />
-                            {loadingCall ? "Connecting Call..." : "Connect Call"}
-                        </button>
+                            <PhoneCall className="w-4 h-4 mr-2" />
+                            {loadingCall ? "Connecting..." : "Connect Call"}
+                        </Button>
                     ) : (
-                        <>
-                            <button
-                                onClick={toggleSpeechRecognition}
-                                className={`flex items-center px-5 py-3 rounded-full font-semibold shadow-md transition cursor-pointer ${
-                                    isListening
-                                        ? "bg-amber-500 animate-pulse text-white"
-                                        : "bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-slate-200"
-                                }`}
-                            >
-                                {isListening ? (
-                                    <>
-                                        <Mic className="mr-2 w-5 h-5" /> Listening...
-                                    </>
-                                ) : (
-                                    <>
-                                        <MicOff className="mr-2 w-5 h-5" /> Voice Mic
-                                    </>
-                                )}
-                            </button>
-                            <button
-                                onClick={leaveConversation}
-                                className="flex items-center px-6 py-3 bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-full shadow-lg transition cursor-pointer"
-                            >
-                                <PhoneOff className="mr-2 w-5 h-5" /> End Call
-                            </button>
-                        </>
+                        <Button
+                            onClick={leaveConversation}
+                            className="bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-full shadow-md text-xs px-5 cursor-pointer"
+                        >
+                            <PhoneOff className="w-4 h-4 mr-2" /> End Call
+                        </Button>
                     )}
                 </div>
+            </div>
 
-                {/* Questions List Container */}
-                <div className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
-                    <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4 text-indigo-500" />
-                        Interview Questions ({questionsList.length})
-                    </h3>
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                        {questionsList.map((item, idx) => (
-                            <div
+            {/* Camera Privacy Disclaimer Bar */}
+            <div className="bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/50 dark:border-indigo-800/50 rounded-2xl px-4 py-2.5 flex items-center justify-between text-xs text-indigo-900 dark:text-indigo-200">
+                <span className="flex items-center gap-2">
+                    <ShieldCheck className="w-4 h-4 text-indigo-500 shrink-0" />
+                    <span><strong>Privacy Notice:</strong> Camera feed is used for camera framing preview only. Facial signals do NOT affect scores or measure confidence.</span>
+                </span>
+                <Button size="sm" variant="ghost" onClick={toggleCamera} className="text-xs h-7 text-indigo-600 dark:text-indigo-400 font-semibold">
+                    {cameraOn ? <><CameraOff className="w-3.5 h-3.5 mr-1" /> Disable Video</> : <><Camera className="w-3.5 h-3.5 mr-1" /> Enable Video</>}
+                </Button>
+            </div>
+
+            {/* Split Screen Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* LEFT SIDE: Question Nav & Active Question (7 cols) */}
+                <div className="lg:col-span-7 space-y-6 flex flex-col">
+                    {/* Question Tab Navigation Pills */}
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                        {questionsList.map((_, idx) => (
+                            <button
                                 key={idx}
-                                className={`p-3.5 rounded-lg border text-sm transition-all ${
-                                    idx === currentQuestionIndex && joined
-                                        ? "bg-indigo-50/80 dark:bg-indigo-950/40 border-indigo-400/60 dark:border-indigo-500/60"
-                                        : "bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800"
+                                onClick={() => setCurrentQuestionIndex(idx)}
+                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                    idx === currentQuestionIndex
+                                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
                                 }`}
                             >
-                                <div className="flex items-start justify-between gap-2 mb-1">
-                                    <span className="font-semibold text-xs text-indigo-600 dark:text-indigo-400">
-                                        Q{idx + 1}. {item.question}
-                                    </span>
-                                    {idx === currentQuestionIndex && joined && (
-                                        <span className="flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-full border border-amber-300/40">
-                                            Active Question
-                                        </span>
-                                    )}
-                                </div>
-                                {item.answer && (
-                                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                                        <span className="font-semibold text-slate-700 dark:text-slate-300">Key Focus:</span> {item.answer}
-                                    </p>
-                                )}
-                            </div>
+                                Question {idx + 1}
+                            </button>
                         ))}
                     </div>
-                </div>
-            </div>
 
-            {/* Right Column: Live Conversation */}
-            <div className='flex flex-col lg:w-1/3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm h-[600px] lg:h-auto'>
-                <h2 className='text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2'>
-                    <Sparkles className="w-4 h-4 text-emerald-500" /> Live Conversation Transcript
-                </h2>
-                <div className='flex-1 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-xl p-4 overflow-y-auto space-y-3 max-h-[480px]'>
-                    {messages.length === 0 ? (
-                        <div className="text-center py-12 text-slate-400 text-xs">
-                            <p>No messages yet.</p>
-                            <p className="mt-1">Click "Connect Call" to start the interview session.</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-3">
-                            {messages.map((msg, index) => (
-                                <div
-                                    key={index}
-                                    className={`flex flex-col ${msg.from === 'user' ? 'items-end' : 'items-start'}`}
+                    {/* Active Question Card */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5 flex-1 flex flex-col justify-between">
+                        <div className="space-y-4">
+                            <div className="flex items-center justify-between">
+                                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                    Question {currentQuestionIndex + 1} of {questionsList.length}
+                                </span>
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => currentQ?.question && speakText(currentQ.question)}
+                                    className="text-xs font-medium rounded-full"
                                 >
-                                    <span className="text-[10px] text-slate-400 mb-1 px-1">
-                                        {msg.from === 'user' ? 'Candidate' : 'AI Recruiter'}
+                                    <Volume2 className="w-3.5 h-3.5 mr-1 text-indigo-500" /> Read Aloud
+                                </Button>
+                            </div>
+
+                            <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
+                                {currentQ?.question || "Loading question..."}
+                            </h2>
+
+                            {currentQ?.answer && (
+                                <div className="p-4 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-2xl border border-indigo-200/50 dark:border-indigo-800/50 text-xs text-slate-700 dark:text-slate-300 leading-relaxed space-y-1">
+                                    <span className="font-bold text-indigo-600 dark:text-indigo-400 block uppercase tracking-wider text-[10px]">
+                                        Suggested Focus & Key Concepts
                                     </span>
-                                    <div
-                                        className={`p-3 rounded-xl text-xs max-w-[85%] leading-relaxed ${
-                                            msg.from === 'user'
-                                                ? 'bg-indigo-600 text-white rounded-br-none'
-                                                : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 shadow-sm rounded-bl-none'
-                                        }`}
-                                    >
-                                        {msg.text}
-                                    </div>
+                                    <p>{currentQ.answer}</p>
                                 </div>
-                            ))}
+                            )}
                         </div>
-                    )}
+
+                        {/* Navigation Footer */}
+                        <div className="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800/80">
+                            <Button
+                                size="sm"
+                                variant="ghost"
+                                disabled={currentQuestionIndex === 0}
+                                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                                className="text-xs"
+                            >
+                                Previous Question
+                            </Button>
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={currentQuestionIndex === questionsList.length - 1}
+                                onClick={() => setCurrentQuestionIndex(prev => Math.min(questionsList.length - 1, prev + 1))}
+                                className="text-xs rounded-full"
+                            >
+                                Next Question
+                            </Button>
+                        </div>
+                    </div>
                 </div>
 
-                {/* Candidate Response Input */}
-                {joined && (
-                    <div className="mt-4 flex gap-2">
-                        <Input
-                            placeholder="Type your response here..."
-                            value={userInputText}
-                            onChange={(e) => setUserInputText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendAnswer()}
-                            className="text-xs"
-                        />
-                        <Button size="sm" onClick={() => handleSendAnswer()}>
-                            <Send className="w-4 h-4" />
-                        </Button>
+                {/* RIGHT SIDE: Video Stage & Live Transcript (5 cols) */}
+                <div className="lg:col-span-5 space-y-6 flex flex-col">
+                    {/* Live Camera Stream Box */}
+                    <div className="w-full h-56 rounded-3xl bg-slate-900 border border-slate-800 overflow-hidden relative flex flex-col items-center justify-center text-white shadow-lg">
+                        {cameraOn ? (
+                            <video
+                                ref={videoRef}
+                                autoPlay
+                                playsInline
+                                muted
+                                className="w-full h-full object-cover scale-x-[-1]"
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center text-center p-4 space-y-2">
+                                <div className="w-14 h-14 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
+                                    <User size={30} className="text-slate-400" />
+                                </div>
+                                <p className="text-xs text-slate-400">
+                                    {joined ? "AI Recruiter Live" : "Click 'Connect Call' to begin"}
+                                </p>
+                            </div>
+                        )}
+
+                        {joined && cameraOn && (
+                            <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-slate-700">
+                                <Eye className="w-3 h-3 text-emerald-400" /> {faceSignal}
+                            </div>
+                        )}
+
+                        {joined && (
+                            <div className="absolute top-3 right-3 bg-emerald-500/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                                <span className="w-2 h-2 rounded-full bg-white animate-ping" /> Recruiter Connected
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    {/* Conversation Transcript Panel */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm flex-1 flex flex-col justify-between h-[360px]">
+                        <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2 mb-3">
+                            <MessageSquare className="w-4 h-4 text-indigo-500" />
+                            Live Transcript & Editable Answer
+                        </h3>
+
+                        <div className="flex-1 border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 rounded-2xl p-4 overflow-y-auto space-y-3 mb-3">
+                            {messages.length === 0 ? (
+                                <div className="text-center py-10 text-slate-400 text-xs">
+                                    <p>No conversation yet.</p>
+                                    <p className="mt-1 text-[11px]">Click "Connect Call" to start speaking or typing.</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-3">
+                                    {messages.map((msg, index) => (
+                                        <div
+                                            key={index}
+                                            className={`flex flex-col ${msg.from === 'user' ? 'items-end' : 'items-start'}`}
+                                        >
+                                            <span className="text-[10px] font-semibold text-slate-400 mb-0.5 px-1">
+                                                {msg.from === 'user' ? 'Candidate' : 'MAPD Recruiter'}
+                                            </span>
+                                            <div
+                                                className={`p-3 rounded-2xl text-xs max-w-[90%] leading-relaxed ${
+                                                    msg.from === 'user'
+                                                        ? 'bg-indigo-600 text-white rounded-br-none shadow-xs'
+                                                        : 'bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-800 shadow-xs rounded-bl-none'
+                                                }`}
+                                            >
+                                                {msg.text}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Editable Input Row */}
+                        {joined && (
+                            <div className="space-y-1.5">
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="icon"
+                                        variant={isListening ? "default" : "outline"}
+                                        onClick={toggleSpeechRecognition}
+                                        className={`h-9 w-9 rounded-xl shrink-0 ${isListening ? "bg-amber-500 animate-pulse text-white" : ""}`}
+                                        title="Speech-to-Text Input"
+                                    >
+                                        {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
+                                    </Button>
+                                    <Input
+                                        placeholder="Type or edit speech transcript here..."
+                                        value={userInputText}
+                                        onChange={(e) => setUserInputText(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSendAnswer()}
+                                        className="text-xs rounded-xl h-9"
+                                    />
+                                    <Button size="sm" onClick={() => handleSendAnswer()} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-9 px-3">
+                                        <Send className="w-3.5 h-3.5" />
+                                    </Button>
+                                </div>
+                                <span className="text-[10px] text-slate-400 flex items-center gap-1 px-1">
+                                    <Edit3 className="w-3 h-3 text-indigo-500" /> You can edit the speech transcript above before sending.
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
-    )
+    );
 }

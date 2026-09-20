@@ -2,7 +2,7 @@
 import { UserDetailContext } from '@/context/UserDetailContext';
 import { api } from '@/convex/_generated/api';
 import { useUser } from '@clerk/nextjs';
-import { useMutation, useConvex } from 'convex/react'
+import { useMutation } from 'convex/react'
 import React, { createContext, useEffect, useState } from 'react'
 
 function ProviderInner({ children }: any) {
@@ -31,7 +31,7 @@ function ProviderInner({ children }: any) {
     );
 }
 
-function FallbackProvider({ children }: any) {
+export function FallbackProvider({ children }: any) {
     const [userDetail, setUserDetail] = useState<any>(null);
     return (
         <UserDetailContext.Provider value={{ userDetail, setUserDetail }}>
@@ -40,11 +40,9 @@ function FallbackProvider({ children }: any) {
     );
 }
 
-function Provider({ children }: any) {
+export default function Provider({ children }: any) {
     return <ProviderInner>{children}</ProviderInner>;
 }
-
-export default Provider
 
 export const useUserDetailContext = () => {
     return createContext(UserDetailContext);

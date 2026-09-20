@@ -1,4 +1,3 @@
-
 import { v } from "convex/values";
 import { mutation, query } from "./_generated/server";
 
@@ -8,22 +7,24 @@ export const SaveInterviewQuestion = mutation({
         uid: v.id('UserTable'),
         resumeUrl: v.optional(v.string()),
         jobTitle: v.optional(v.string()),
-        jobDescription: v.optional(v.string())
-
+        jobDescription: v.optional(v.string()),
+        experienceLevel: v.optional(v.string()),
+        techStack: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const result = await ctx.db.insert('InterviewSessionTable', {
             interviewQuestions: args.questions,
             resumeUrl: args.resumeUrl ?? null,
             userId: args.uid,
-            status: 'darft',
+            status: 'draft',
             jobTitle: args.jobTitle ?? null,
-            jobDescription: args.jobDescription ?? null
+            jobDescription: args.jobDescription ?? null,
+            experienceLevel: args.experienceLevel ?? null,
+            techStack: args.techStack ?? null,
         });
         return result;
     }
-})
-
+});
 
 export const GetInterviewQuestions = query({
     args: {
@@ -36,8 +37,7 @@ export const GetInterviewQuestions = query({
 
         return result[0];
     }
-
-})
+});
 
 export const UpdateFeedback = mutation({
     args: {
@@ -51,7 +51,7 @@ export const UpdateFeedback = mutation({
         });
         return result;
     }
-})
+});
 
 export const GetInterviewList = query({
     args: {
@@ -65,4 +65,14 @@ export const GetInterviewList = query({
 
         return result;
     }
-})
+});
+
+export const DeleteInterview = mutation({
+    args: {
+        recordId: v.id('InterviewSessionTable')
+    },
+    handler: async (ctx, args) => {
+        await ctx.db.delete(args.recordId);
+        return true;
+    }
+});

@@ -1,19 +1,24 @@
-import { Button } from '@/components/ui/button'
-import Image from 'next/image'
 import React from 'react'
 import CreateInterviewDialog from '../../_components/CreateInterviewDialog'
+import { Sparkles, Video } from 'lucide-react'
 
 function EmptyState() {
     return (
-        <div className='mt-14 flex flex-col items-center gap-5  border-dashed p-10 border-4 rounded-2xl bg-gray-50'>
-            <Image src={'/interview.png'} alt='emptyState'
-                width={130}
-                height={130}
-            />
-            <h2 className='mt-2 text-lg text-gray-500'>You do not have any Interview created </h2>
-            <CreateInterviewDialog />
+        <div className="mt-10 flex flex-col items-center justify-center text-center p-12 border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-3xl bg-slate-50/50 dark:bg-slate-900/30 max-w-xl mx-auto space-y-4">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200/60 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm">
+                <Video className="w-8 h-8" />
+            </div>
+            <div className="space-y-1">
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white">Start your first mock interview</h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400 max-w-sm">
+                    Select a target job role or upload your resume PDF to generate personalized technical interview questions.
+                </p>
+            </div>
+            <div className="pt-2">
+                <CreateInterviewDialog />
+            </div>
         </div>
-    )
+    );
 }
 
-export default EmptyState
+export default EmptyState;

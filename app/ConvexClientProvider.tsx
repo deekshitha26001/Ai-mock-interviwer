@@ -2,7 +2,7 @@
 
 import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { ReactNode, useMemo } from "react";
-import Provider from "./Provider";
+import Provider, { FallbackProvider } from "./Provider";
 
 const rawConvexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
 const isValidConvexUrl =
@@ -24,7 +24,7 @@ export function ConvexClientProvider({ children }: { children: ReactNode }) {
     }, []);
 
     if (!convexClient) {
-        return <Provider>{children}</Provider>;
+        return <FallbackProvider>{children}</FallbackProvider>;
     }
 
     return (
