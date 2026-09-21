@@ -55,6 +55,8 @@ export default function StartInterview() {
     const [faceSignal, setFaceSignal] = useState<string>("Face Centered");
     const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null);
 
+    const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
     const videoRef = useRef<HTMLVideoElement>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
 
@@ -74,6 +76,46 @@ export default function StartInterview() {
                 mediaStreamRef.current.getTracks().forEach(track => track.stop());
             }
         };
+    }, []);
+
+    // Ensure video element gets assigned the stream when camera is on and mounted
+    useEffect(() => {
+        if (cameraOn && videoRef.current && mediaStream) {
+            videoRef.current.srcObject = mediaStream;
+        }
+    }, [cameraOn, mediaStream]);
+
+    // Camera initializer
+    const startCamera = async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+            mediaStreamRef.current = stream;
+            setMediaStream(stream);
+            setCameraOn(true);
+            setCameraPermissionError(null);
+        } catch (e) {
+            console.warn("Camera init warning:", e);
+            setCameraPermissionError("Camera disabled / unavailable. Video is optional.");
+            setCameraOn(false);
+        }
+    };
+
+    const toggleCamera = async () => {
+        if (cameraOn) {
+            if (mediaStreamRef.current) {
+                mediaStreamRef.current.getVideoTracks().forEach(t => t.stop());
+            }
+            setMediaStream(null);
+            setCameraOn(false);
+            toast.info("Camera turned off. You can continue with voice/text.");
+        } else {
+            await startCamera();
+        }
+    };
+
+    // Auto-start camera when page loads
+    useEffect(() => {
+        startCamera();
     }, []);
 
     useEffect(() => {
@@ -145,14 +187,25 @@ export default function StartInterview() {
         });
     }, [interviewId, rawRecord]);
 
-    // Speech Synthesis helper
+    // Enhanced Speech Synthesis helper to speak questions out loud naturally
     const speakText = (text: string) => {
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
             try {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 1.0;
+                utterance.rate = 0.95;
                 utterance.pitch = 1.0;
+
+                const voices = window.speechSynthesis.getVoices();
+                const preferredVoice = voices.find(v =>
+                    (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Zira") || v.name.includes("David")) &&
+                    v.lang.startsWith("en")
+                ) || voices.find(v => v.lang.startsWith("en"));
+
+                if (preferredVoice) {
+                    utterance.voice = preferredVoice;
+                }
+
                 window.speechSynthesis.speak(utterance);
             } catch (e) {
                 console.warn("Speech synthesis unavailable:", e);
@@ -160,34 +213,6 @@ export default function StartInterview() {
         }
     };
 
-    // Camera initializer
-    const startCamera = async () => {
-        if (!cameraOn) return;
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-            mediaStreamRef.current = stream;
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
-            setCameraPermissionError(null);
-        } catch (e) {
-            console.warn("Camera init warning:", e);
-            setCameraPermissionError("Camera disabled / unavailable. Video is optional.");
-        }
-    };
-
-    const toggleCamera = () => {
-        if (cameraOn) {
-            if (mediaStreamRef.current) {
-                mediaStreamRef.current.getVideoTracks().forEach(t => t.stop());
-            }
-            setCameraOn(false);
-            toast.info("Camera turned off. You can continue with voice/text.");
-        } else {
-            setCameraOn(true);
-            startCamera();
-        }
-    };
 
     // Connect Call handler
     const StartConversation = async () => {
@@ -210,7 +235,10 @@ export default function StartInterview() {
         setLoadingCall(false);
     };
 
-    // Speech recognition toggle with transcript editing
+    const recognitionRef = useRef<any>(null);
+    const isListeningRef = useRef<boolean>(false);
+
+    // Speech recognition toggle with continuous manual control
     const toggleSpeechRecognition = () => {
         if (typeof window === 'undefined') return;
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -220,43 +248,70 @@ export default function StartInterview() {
             return;
         }
 
-        if (isListening) {
+        // If mic is currently ON, turn it OFF manually when clicked
+        if (isListeningRef.current || isListening) {
+            isListeningRef.current = false;
             setIsListening(false);
+            if (recognitionRef.current) {
+                try {
+                    recognitionRef.current.stop();
+                } catch (e) {}
+            }
+            toast.info("Microphone turned off.");
             return;
         }
 
         try {
             const recognition = new SpeechRecognition();
-            recognition.continuous = false;
+            recognition.continuous = true; // Continuous listening across pauses
             recognition.interimResults = true;
             recognition.lang = 'en-US';
 
             recognition.onstart = () => {
+                isListeningRef.current = true;
                 setIsListening(true);
-                toast.success("Listening... Speak now. You can edit the text before sending.");
+                toast.success("Microphone ON. Speak freely — click mic again when finished.");
             };
 
             recognition.onresult = (event: any) => {
-                const speechResult = Array.from(event.results)
-                    .map((r: any) => r[0].transcript)
-                    .join('');
-                if (speechResult) {
-                    setUserInputText(speechResult);
+                let accumulatedText = '';
+                for (let i = 0; i < event.results.length; i++) {
+                    accumulatedText += event.results[i][0].transcript;
+                }
+                if (accumulatedText) {
+                    setUserInputText(accumulatedText);
                 }
             };
 
-            recognition.onerror = () => {
-                setIsListening(false);
-                toast.error("Could not capture speech. Please type your answer.");
+            recognition.onerror = (err: any) => {
+                console.warn("Speech recognition notice:", err?.error);
+                // Ignore transient silence errors in continuous mode
+                if (err?.error === 'no-speech' && isListeningRef.current) {
+                    return;
+                }
             };
 
             recognition.onend = () => {
-                setIsListening(false);
+                // If user has NOT manually turned off mic, keep listening continuously
+                if (isListeningRef.current) {
+                    try {
+                        recognition.start();
+                    } catch (e) {
+                        // In case restart fails, reset state
+                        isListeningRef.current = false;
+                        setIsListening(false);
+                    }
+                } else {
+                    setIsListening(false);
+                }
             };
 
+            recognitionRef.current = recognition;
+            isListeningRef.current = true;
             recognition.start();
         } catch (e) {
             console.error("Speech recognition error:", e);
+            isListeningRef.current = false;
             setIsListening(false);
         }
     };
@@ -265,6 +320,15 @@ export default function StartInterview() {
     const handleSendAnswer = (textToSend?: string) => {
         const text = textToSend || userInputText;
         if (!text.trim()) return;
+
+        // Turn off continuous microphone when sending answer
+        if (isListeningRef.current) {
+            isListeningRef.current = false;
+            setIsListening(false);
+            if (recognitionRef.current) {
+                try { recognitionRef.current.stop(); } catch (e) {}
+            }
+        }
 
         const updatedMessages: Messages[] = [
             ...messages,
@@ -418,7 +482,13 @@ export default function StartInterview() {
                         {questionsList.map((_, idx) => (
                             <button
                                 key={idx}
-                                onClick={() => setCurrentQuestionIndex(idx)}
+                                onClick={() => {
+                                    setCurrentQuestionIndex(idx);
+                                    const q = questionsList[idx];
+                                    if (q?.question) {
+                                        speakText(`Question ${idx + 1}: ${q.question}`);
+                                    }
+                                }}
                                 className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                                     idx === currentQuestionIndex
                                         ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
@@ -440,10 +510,10 @@ export default function StartInterview() {
                                 <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => currentQ?.question && speakText(currentQ.question)}
-                                    className="text-xs font-medium rounded-full"
+                                    onClick={() => currentQ?.question && speakText(`Question ${currentQuestionIndex + 1}: ${currentQ.question}`)}
+                                    className="text-xs font-medium rounded-full cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950"
                                 >
-                                    <Volume2 className="w-3.5 h-3.5 mr-1 text-indigo-500" /> Read Aloud
+                                    <Volume2 className="w-3.5 h-3.5 mr-1 text-indigo-500 animate-pulse" /> Read Question Aloud
                                 </Button>
                             </div>
 
@@ -467,7 +537,14 @@ export default function StartInterview() {
                                 size="sm"
                                 variant="ghost"
                                 disabled={currentQuestionIndex === 0}
-                                onClick={() => setCurrentQuestionIndex(prev => Math.max(0, prev - 1))}
+                                onClick={() => {
+                                    const prevIdx = Math.max(0, currentQuestionIndex - 1);
+                                    setCurrentQuestionIndex(prevIdx);
+                                    const q = questionsList[prevIdx];
+                                    if (q?.question) {
+                                        speakText(`Question ${prevIdx + 1}: ${q.question}`);
+                                    }
+                                }}
                                 className="text-xs"
                             >
                                 Previous Question
@@ -476,7 +553,14 @@ export default function StartInterview() {
                                 size="sm"
                                 variant="outline"
                                 disabled={currentQuestionIndex === questionsList.length - 1}
-                                onClick={() => setCurrentQuestionIndex(prev => Math.min(questionsList.length - 1, prev + 1))}
+                                onClick={() => {
+                                    const nextIdx = Math.min(questionsList.length - 1, currentQuestionIndex + 1);
+                                    setCurrentQuestionIndex(nextIdx);
+                                    const q = questionsList[nextIdx];
+                                    if (q?.question) {
+                                        speakText(`Question ${nextIdx + 1}: ${q.question}`);
+                                    }
+                                }}
                                 className="text-xs rounded-full"
                             >
                                 Next Question

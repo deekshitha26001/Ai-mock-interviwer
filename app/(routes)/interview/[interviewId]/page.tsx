@@ -17,6 +17,8 @@ export default function InterviewPreparationPage() {
     const [micEnabled, setMicEnabled] = useState(false);
     const [permissionError, setPermissionError] = useState<string | null>(null);
 
+    const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
+
     const videoRef = useRef<HTMLVideoElement>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
 
@@ -35,6 +37,13 @@ export default function InterviewPreparationPage() {
         };
     }, []);
 
+    // Ensure video element gets assigned the stream when enabled and mounted
+    useEffect(() => {
+        if (webcamEnabled && videoRef.current && mediaStream) {
+            videoRef.current.srcObject = mediaStream;
+        }
+    }, [webcamEnabled, mediaStream]);
+
     const enableDevices = async () => {
         setPermissionError(null);
         try {
@@ -44,12 +53,10 @@ export default function InterviewPreparationPage() {
             });
 
             mediaStreamRef.current = stream;
+            setMediaStream(stream);
             setWebcamEnabled(true);
             setMicEnabled(true);
 
-            if (videoRef.current) {
-                videoRef.current.srcObject = stream;
-            }
             toast.success("Camera and Microphone connected!");
         } catch (err: any) {
             console.warn("Device permission error:", err);
