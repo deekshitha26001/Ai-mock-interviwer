@@ -46,31 +46,60 @@ export default function InterviewPreparationPage() {
 
     const enableDevices = async () => {
         setPermissionError(null);
-        try {
-            const stream = await navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: true
-            });
+        let videoOk = false;
+        let audioOk = false;
 
+        // Try getting both video and audio together
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             mediaStreamRef.current = stream;
             setMediaStream(stream);
             setWebcamEnabled(true);
             setMicEnabled(true);
-
             toast.success("Camera and Microphone connected!");
+            return;
         } catch (err: any) {
-            console.warn("Device permission error:", err);
-            setPermissionError("Camera or microphone permission denied / unavailable.");
+            console.warn("Full media stream request failed:", err?.name, err?.message);
+        }
 
-            // Fallback audio check only
-            try {
-                const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // Separate check: Try Camera only
+        let cameraStream: MediaStream | null = null;
+        try {
+            cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            videoOk = true;
+            setWebcamEnabled(true);
+            setMediaStream(cameraStream);
+            mediaStreamRef.current = cameraStream;
+        } catch (camErr: any) {
+            console.warn("Camera check failed:", camErr?.name);
+        }
+
+        // Separate check: Try Audio only
+        try {
+            const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioOk = true;
+            setMicEnabled(true);
+            if (!cameraStream) {
                 mediaStreamRef.current = audioStream;
-                setMicEnabled(true);
-                toast.info("Microphone connected (Voice-only mode).");
-            } catch (audioErr) {
-                toast.error("Permissions denied. You can still proceed using text input.");
+            } else {
+                audioStream.getAudioTracks().forEach(track => cameraStream?.addTrack(track));
             }
+        } catch (audErr: any) {
+            console.warn("Audio check failed:", audErr?.name);
+        }
+
+        if (videoOk && audioOk) {
+            toast.success("Camera and Microphone connected!");
+            setPermissionError(null);
+        } else if (videoOk && !audioOk) {
+            toast.info("Camera connected! Microphone unavailable.");
+            setPermissionError("Microphone not detected or blocked. Voice recording will be disabled.");
+        } else if (!videoOk && audioOk) {
+            toast.info("Microphone connected! Video unavailable.");
+            setPermissionError("Camera not detected or in use by another app. Continuing in voice/text mode.");
+        } else {
+            toast.error("Camera and Microphone unavailable. Proceed using text mode below.");
+            setPermissionError("Hardware unavailable or blocked in Windows settings. You can still click Start Interview to use text mode.");
         }
     };
 
@@ -222,10 +251,15 @@ export default function InterviewPreparationPage() {
                         </div>
 
                         {permissionError && (
-                            <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 p-3 rounded-xl border border-amber-200/50 mt-3 flex items-center gap-2">
-                                <AlertTriangle className="w-4 h-4 shrink-0" />
-                                {permissionError}
-                            </p>
+                            <div className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/50 p-3 rounded-xl border border-amber-200/50 mt-3 space-y-1">
+                                <p className="flex items-center gap-2 font-semibold">
+                                    <AlertTriangle className="w-4 h-4 shrink-0 text-amber-600" />
+                                    {permissionError}
+                                </p>
+                                <p className="text-[11px] text-amber-600 dark:text-amber-300 leading-relaxed">
+                                    Click the 🔒 icon next to <code>localhost:3000</code> in your browser address bar, set Camera & Mic to <strong>Allow</strong>, and refresh the page. Or click <strong>Start Interview</strong> to proceed using text mode.
+                                </p>
+                            </div>
                         )}
                     </div>
 

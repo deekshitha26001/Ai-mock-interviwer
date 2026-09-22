@@ -93,9 +93,22 @@ export default function StartInterview() {
             setMediaStream(stream);
             setCameraOn(true);
             setCameraPermissionError(null);
+            return;
         } catch (e) {
-            console.warn("Camera init warning:", e);
-            setCameraPermissionError("Camera disabled / unavailable. Video is optional.");
+            console.warn("Combined stream init failed, trying video only...", e);
+        }
+
+        // Try video-only fallback
+        try {
+            const videoStream = await navigator.mediaDevices.getUserMedia({ video: true });
+            mediaStreamRef.current = videoStream;
+            setMediaStream(videoStream);
+            setCameraOn(true);
+            setCameraPermissionError(null);
+            toast.success("Camera feed connected!");
+        } catch (videoErr: any) {
+            console.warn("Camera init warning:", videoErr);
+            setCameraPermissionError("Camera disabled or unavailable. Video is optional.");
             setCameraOn(false);
         }
     };

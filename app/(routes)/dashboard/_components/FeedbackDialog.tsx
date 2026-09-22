@@ -23,23 +23,31 @@ export type FeedbackInfo = {
 function FeedbackDialog({ feedbackInfo }: Props) {
     return (
         <Dialog>
-            <DialogTrigger asChild><Button>Feedback</Button></DialogTrigger>
-            <DialogContent>
+            <DialogTrigger asChild><Button variant="outline" size="sm" className="rounded-full">Feedback</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-lg rounded-2xl p-6 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-2xl">
                 <DialogHeader>
-                    <DialogTitle className='font-bold text-2xl'>Interview Feedback</DialogTitle>
-                    <DialogDescription>
-                        <div>
-                            <h2 className='font-bold text-xl text-black'>Feedback:</h2>
-                            <p className='text-lg'>{feedbackInfo?.feedback}</p>
+                    <DialogTitle className='font-bold text-2xl text-slate-900 dark:text-white'>Interview Feedback</DialogTitle>
+                    <DialogDescription asChild>
+                        <div className="space-y-4 text-slate-700 dark:text-slate-300 mt-3 text-sm">
                             <div>
-                                <h2 className='font-bold text-xl text-black mt-5'>Suggestion:</h2>
-
-                                {feedbackInfo?.suggestions?.map((item, index) => (
-                                    <h2 className='p-2 my-1 bg-gray-50  text-lg rounded-lg flex gap-2'> {item}</h2>
-                                ))}
+                                <h3 className='font-bold text-base text-slate-900 dark:text-white'>Feedback:</h3>
+                                <p className='text-sm text-slate-600 dark:text-slate-300 mt-1 leading-relaxed'>{feedbackInfo?.feedback}</p>
                             </div>
-                            <h2 className='font-bold text-xl text-primary'>Rating: <span className='text-primary'>{feedbackInfo?.rating}</span> </h2>
-
+                            <div>
+                                <h3 className='font-bold text-base text-slate-900 dark:text-white mt-3'>Suggestions:</h3>
+                                <div className="space-y-2 mt-2">
+                                    {feedbackInfo?.suggestions?.map((item, index) => (
+                                        <div key={index} className='p-3 bg-slate-50 dark:bg-slate-900 text-xs md:text-sm rounded-xl border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 flex items-start gap-2'>
+                                            <span className="font-bold text-indigo-600 dark:text-indigo-400">•</span>
+                                            <span>{item}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                            <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                <span className='font-bold text-base text-slate-900 dark:text-white'>Rating:</span>
+                                <span className='font-extrabold text-xl text-indigo-600 dark:text-indigo-400'>{feedbackInfo?.rating} / 10</span>
+                            </div>
                         </div>
                     </DialogDescription>
                 </DialogHeader>
