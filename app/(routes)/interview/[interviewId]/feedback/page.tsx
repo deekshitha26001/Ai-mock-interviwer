@@ -1,17 +1,24 @@
 "use client"
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import RadarChart from './_components/RadarChart';
 
 export default function InterviewFeedbackPage() {
     const { interviewId } = useParams();
     const router = useRouter();
     const [openQuestionIndex, setOpenQuestionIndex] = useState<number | null>(0);
+
+    const handlePrint = () => {
+        if (typeof window !== 'undefined') {
+            window.print();
+        }
+    };
 
     // Fetch interview record from Convex
     const record = useQuery(
@@ -93,6 +100,14 @@ export default function InterviewFeedbackPage() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <Button
+                        onClick={handlePrint}
+                        variant="outline"
+                        size="sm"
+                        className="rounded-full text-xs font-semibold border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100"
+                    >
+                        <Printer className="w-3.5 h-3.5 mr-1.5 text-indigo-500" /> Export PDF Report
+                    </Button>
                     <Link href={`/interview/${interviewId}/recruiter-report`}>
                         <Button variant="outline" size="sm" className="rounded-full text-xs font-semibold border-indigo-200 text-indigo-600 dark:text-indigo-400">
                             <UserCheck className="w-4 h-4 mr-1" /> View Recruiter Report
@@ -106,7 +121,7 @@ export default function InterviewFeedbackPage() {
                 </div>
             </div>
 
-            {/* Top Rating Banner & 5-Metric Scores */}
+            {/* Top Rating Banner & 5-Metric Radar Chart */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Overall Practice Score Card */}
                 <div className="md:col-span-1 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-3">
@@ -127,28 +142,36 @@ export default function InterviewFeedbackPage() {
                     </Badge>
                 </div>
 
-                {/* 5-Metric Breakdown */}
+                {/* 5-Metric Breakdown & Radar Chart */}
                 <div className="md:col-span-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xs space-y-4">
                     <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center justify-between">
                         <span>Multi-Dimensional Skill Evaluation</span>
-                        <span className="text-indigo-600 dark:text-indigo-400">5 Key Metrics</span>
+                        <span className="text-indigo-600 dark:text-indigo-400">Interactive Radar Chart & Metrics</span>
                     </h3>
 
-                    <div className="space-y-3">
-                        {metrics.map((m, idx) => (
-                            <div key={idx} className="space-y-1">
-                                <div className="flex justify-between items-center text-xs font-semibold">
-                                    <span className="text-slate-700 dark:text-slate-300">{m.label}</span>
-                                    <span className="text-slate-900 dark:text-white font-bold">{m.score} / 10</span>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+                        {/* Radar Chart */}
+                        <div className="lg:col-span-5 flex justify-center py-2">
+                            <RadarChart metrics={metrics} size={250} />
+                        </div>
+
+                        {/* Metric Bars */}
+                        <div className="lg:col-span-7 space-y-3">
+                            {metrics.map((m, idx) => (
+                                <div key={idx} className="space-y-1">
+                                    <div className="flex justify-between items-center text-xs font-semibold">
+                                        <span className="text-slate-700 dark:text-slate-300">{m.label}</span>
+                                        <span className="text-slate-900 dark:text-white font-bold">{m.score} / 10</span>
+                                    </div>
+                                    <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                                        <div
+                                            className={`h-full rounded-full ${m.color} transition-all duration-500`}
+                                            style={{ width: `${(m.score / 10) * 100}%` }}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
-                                    <div
-                                        className={`h-full rounded-full ${m.color} transition-all duration-500`}
-                                        style={{ width: `${(m.score / 10) * 100}%` }}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>

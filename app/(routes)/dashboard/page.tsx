@@ -10,6 +10,7 @@ import EmptyState from './_components/EmptyState';
 import InterviewCard from './_components/InterviewCard';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Award, CheckCircle2, Clock, Layers, Sparkles } from 'lucide-react';
+import SavedFlashcards from './_components/SavedFlashcards';
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -74,7 +75,8 @@ export default function Dashboard() {
                         Practice smarter. Interview better. Get hired.
                     </p>
                 </div>
-                <div className="z-10">
+                <div className="z-10 flex items-center gap-3">
+                    <SavedFlashcards />
                     <CreateInterviewDialog />
                 </div>
             </div>

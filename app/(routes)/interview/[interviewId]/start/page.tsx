@@ -5,10 +5,13 @@ import { useConvex, useMutation, useQuery } from 'convex/react';
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2, Camera, CameraOff, Eye, ShieldCheck, Edit3 } from 'lucide-react';
+import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2, Camera, CameraOff, Eye, ShieldCheck, Edit3, Bookmark, BookmarkCheck, Keyboard } from 'lucide-react';
 import { toast } from 'sonner';
 import { FeedbackInfo } from '@/app/(routes)/dashboard/_components/FeedbackDialog';
 import { Input } from '@/components/ui/input';
+import AudioVisualizer from './_components/AudioVisualizer';
+import QuestionTimer from './_components/QuestionTimer';
+import VoiceSettings from './_components/VoiceSettings';
 
 export type InterviewData = {
     jobTitle: string | null,
@@ -51,9 +54,13 @@ export default function StartInterview() {
     const [userInputText, setUserInputText] = useState("");
     const [isListening, setIsListening] = useState(false);
 
-    // Camera Framing & Face Detection Signals
     const [faceSignal, setFaceSignal] = useState<string>("Face Centered");
     const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null);
+
+    // AI Voice & Bookmarking State
+    const [speechRate, setSpeechRate] = useState<number>(1.0);
+    const [selectedVoiceName, setSelectedVoiceName] = useState<string>("");
+    const [bookmarkedIndices, setBookmarkedIndices] = useState<number[]>([]);
 
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
@@ -131,6 +138,25 @@ export default function StartInterview() {
         startCamera();
     }, []);
 
+    // Keyboard Shortcuts (Space for mic toggle when not focused on input, Ctrl+Enter to submit answer)
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            const activeTag = document.activeElement?.tagName.toLowerCase();
+            const isInput = activeTag === 'input' || activeTag === 'textarea';
+
+            if (e.key === ' ' && !isInput && joined) {
+                e.preventDefault();
+                toggleSpeechRecognition();
+            } else if (e.key === 'Enter' && e.ctrlKey && joined) {
+                e.preventDefault();
+                handleSendAnswer();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [joined, userInputText]);
+
     useEffect(() => {
         if (!interviewId) {
             setErrorMsg("No interview ID provided in URL.");
@@ -206,17 +232,21 @@ export default function StartInterview() {
             try {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 0.95;
+                utterance.rate = speechRate || 1.0;
                 utterance.pitch = 1.0;
 
                 const voices = window.speechSynthesis.getVoices();
-                const preferredVoice = voices.find(v =>
-                    (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Zira") || v.name.includes("David")) &&
-                    v.lang.startsWith("en")
-                ) || voices.find(v => v.lang.startsWith("en"));
+                let selected = voices.find(v => v.name === selectedVoiceName);
 
-                if (preferredVoice) {
-                    utterance.voice = preferredVoice;
+                if (!selected) {
+                    selected = voices.find(v =>
+                        (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Zira") || v.name.includes("David")) &&
+                        v.lang.startsWith("en")
+                    ) || voices.find(v => v.lang.startsWith("en"));
+                }
+
+                if (selected) {
+                    utterance.voice = selected;
                 }
 
                 window.speechSynthesis.speak(utterance);
@@ -224,6 +254,33 @@ export default function StartInterview() {
                 console.warn("Speech synthesis unavailable:", e);
             }
         }
+    };
+
+    const toggleBookmark = (index: number) => {
+        setBookmarkedIndices(prev => {
+            const exists = prev.includes(index);
+            const updated = exists ? prev.filter(i => i !== index) : [...prev, index];
+            try {
+                const currentQ = (interviewData?.interviewQuestions || [])[index];
+                if (currentQ) {
+                    const savedKey = "mapd_saved_flashcards";
+                    const existingStr = localStorage.getItem(savedKey) || "[]";
+                    const existingList = JSON.parse(existingStr);
+                    if (exists) {
+                        const filtered = existingList.filter((q: any) => q.question !== currentQ.question);
+                        localStorage.setItem(savedKey, JSON.stringify(filtered));
+                        toast.info("Removed from saved flashcards.");
+                    } else {
+                        existingList.push({ ...currentQ, jobTitle: interviewData?.jobTitle || "Technical Role" });
+                        localStorage.setItem(savedKey, JSON.stringify(existingList));
+                        toast.success("Saved to flashcards!");
+                    }
+                }
+            } catch (e) {
+                console.warn("Bookmark storage notice:", e);
+            }
+            return updated;
+        });
     };
 
 
@@ -455,6 +512,13 @@ export default function StartInterview() {
                 </div>
 
                 <div className="flex items-center gap-3">
+                    <VoiceSettings
+                        speechRate={speechRate}
+                        setSpeechRate={setSpeechRate}
+                        selectedVoiceName={selectedVoiceName}
+                        setSelectedVoiceName={setSelectedVoiceName}
+                    />
+
                     {!joined ? (
                         <Button
                             onClick={StartConversation}
@@ -502,13 +566,16 @@ export default function StartInterview() {
                                         speakText(`Question ${idx + 1}: ${q.question}`);
                                     }
                                 }}
-                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 ${
                                     idx === currentQuestionIndex
                                         ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
                                         : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
                                 }`}
                             >
-                                Question {idx + 1}
+                                <span>Question {idx + 1}</span>
+                                {bookmarkedIndices.includes(idx) && (
+                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                )}
                             </button>
                         ))}
                     </div>
@@ -516,18 +583,42 @@ export default function StartInterview() {
                     {/* Active Question Card */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5 flex-1 flex flex-col justify-between">
                         <div className="space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
-                                    Question {currentQuestionIndex + 1} of {questionsList.length}
-                                </span>
-                                <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => currentQ?.question && speakText(`Question ${currentQuestionIndex + 1}: ${currentQ.question}`)}
-                                    className="text-xs font-medium rounded-full cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950"
-                                >
-                                    <Volume2 className="w-3.5 h-3.5 mr-1 text-indigo-500 animate-pulse" /> Read Question Aloud
-                                </Button>
+                            <div className="flex items-center justify-between flex-wrap gap-2">
+                                <div className="flex items-center gap-3">
+                                    <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                                        Question {currentQuestionIndex + 1} of {questionsList.length}
+                                    </span>
+                                    <QuestionTimer keyIndex={currentQuestionIndex} />
+                                </div>
+
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={() => toggleBookmark(currentQuestionIndex)}
+                                        className={`text-xs h-8 px-2.5 rounded-xl border ${
+                                            bookmarkedIndices.includes(currentQuestionIndex)
+                                                ? "border-amber-300 text-amber-600 bg-amber-50 dark:bg-amber-950/40"
+                                                : "border-slate-200 dark:border-slate-800 text-slate-500"
+                                        }`}
+                                        title="Bookmark question to practice later"
+                                    >
+                                        {bookmarkedIndices.includes(currentQuestionIndex) ? (
+                                            <><BookmarkCheck className="w-3.5 h-3.5 mr-1 text-amber-500" /> Bookmarked</>
+                                        ) : (
+                                            <><Bookmark className="w-3.5 h-3.5 mr-1" /> Bookmark</>
+                                        )}
+                                    </Button>
+
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => currentQ?.question && speakText(`Question ${currentQuestionIndex + 1}: ${currentQ.question}`)}
+                                        className="text-xs font-medium rounded-full cursor-pointer hover:bg-indigo-50 dark:hover:bg-indigo-950"
+                                    >
+                                        <Volume2 className="w-3.5 h-3.5 mr-1 text-indigo-500 animate-pulse" /> Read Aloud
+                                    </Button>
+                                </div>
                             </div>
 
                             <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white leading-snug">
@@ -659,13 +750,16 @@ export default function StartInterview() {
                         {/* Editable Input Row */}
                         {joined && (
                             <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <AudioVisualizer isListening={isListening} stream={mediaStream} />
+                                </div>
                                 <div className="flex items-center gap-2">
                                     <Button
                                         size="icon"
                                         variant={isListening ? "default" : "outline"}
                                         onClick={toggleSpeechRecognition}
                                         className={`h-9 w-9 rounded-xl shrink-0 ${isListening ? "bg-amber-500 animate-pulse text-white" : ""}`}
-                                        title="Speech-to-Text Input"
+                                        title="Speech-to-Text Input (Press Spacebar)"
                                     >
                                         {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                                     </Button>
@@ -680,9 +774,14 @@ export default function StartInterview() {
                                         <Send className="w-3.5 h-3.5" />
                                     </Button>
                                 </div>
-                                <span className="text-[10px] text-slate-400 flex items-center gap-1 px-1">
-                                    <Edit3 className="w-3 h-3 text-indigo-500" /> You can edit the speech transcript above before sending.
-                                </span>
+                                <div className="flex items-center justify-between text-[10px] text-slate-400 px-1 pt-0.5">
+                                    <span className="flex items-center gap-1">
+                                        <Edit3 className="w-3 h-3 text-indigo-500" /> Edit speech transcript before sending.
+                                    </span>
+                                    <span className="flex items-center gap-1 font-mono text-[9px] text-indigo-500/80 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded-md border border-indigo-200/50">
+                                        <Keyboard className="w-3 h-3" /> Space = Mic • Ctrl+Enter = Send
+                                    </span>
+                                </div>
                             </div>
                         )}
                     </div>
