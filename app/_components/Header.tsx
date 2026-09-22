@@ -6,6 +6,8 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 import MAPDLogo from './MAPDLogo'
 
+import ThemeToggle from './ThemeToggle'
+
 function Header() {
     const pathname = usePathname();
 
@@ -43,6 +45,7 @@ function Header() {
                 </nav>
 
                 <div className="flex items-center gap-3">
+                    <ThemeToggle />
                     <SignedOut>
                         <SignInButton mode="modal">
                             <Button variant="ghost" size="sm" className="text-xs font-semibold">

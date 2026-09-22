@@ -42,7 +42,7 @@ function InterviewCard({ interviewInfo, onDeleteSuccess }: Props) {
     const rating = interviewInfo.feedback?.rating;
 
     return (
-        <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col justify-between space-y-4">
+        <div className="group relative bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-indigo-500/50 dark:hover:border-indigo-500/50 rounded-2xl p-5 shadow-xs hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-300 flex flex-col justify-between space-y-4 hover:-translate-y-0.5">
             <div>
                 {/* Header Row */}
                 <div className="flex items-start justify-between gap-3">

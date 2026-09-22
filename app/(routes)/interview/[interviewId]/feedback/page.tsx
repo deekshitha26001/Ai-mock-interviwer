@@ -1,22 +1,33 @@
 "use client"
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download, Copy, CopyCheck } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { toast } from 'sonner';
 import RadarChart from './_components/RadarChart';
 
 export default function InterviewFeedbackPage() {
     const { interviewId } = useParams();
     const router = useRouter();
     const [openQuestionIndex, setOpenQuestionIndex] = useState<number | null>(0);
+    const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
     const handlePrint = () => {
         if (typeof window !== 'undefined') {
             window.print();
+        }
+    };
+
+    const copyText = (text: string, idx: number) => {
+        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+            navigator.clipboard.writeText(text);
+            setCopiedIndex(idx);
+            toast.success("STAR model answer copied to clipboard!");
+            setTimeout(() => setCopiedIndex(null), 2000);
         }
     };
 
@@ -268,9 +279,17 @@ export default function InterviewFeedbackPage() {
 
                                         {/* Suggested STAR Format Answer */}
                                         <div className="space-y-1">
-                                            <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase text-[10px] tracking-wider flex items-center gap-1">
-                                                <Check className="w-3 h-3" /> Suggested STAR Model Answer Structure
-                                            </span>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase text-[10px] tracking-wider flex items-center gap-1">
+                                                    <Check className="w-3 h-3" /> Suggested STAR Model Answer Structure
+                                                </span>
+                                                <button
+                                                    onClick={() => copyText(feedbackData.modelAnswers?.[0]?.starAnswer || "SITUATION: Working on a complex system module.\nTASK: Deliver a robust technical implementation.\nACTION: Analyzed requirements, applied design patterns, and wrote clean unit tests.\nRESULT: Successfully deployed with high performance and stability.", idx)}
+                                                    className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer"
+                                                >
+                                                    {copiedIndex === idx ? <><CopyCheck className="w-3 h-3 text-emerald-500" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy Answer</>}
+                                                </button>
+                                            </div>
                                             <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/50 text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line font-mono text-[11px]">
                                                 {feedbackData.modelAnswers?.[0]?.starAnswer || "SITUATION: Working on a complex system module.\nTASK: Deliver a robust technical implementation.\nACTION: Analyzed requirements, applied design patterns, and wrote clean unit tests.\nRESULT: Successfully deployed with high performance and stability."}
                                             </div>
