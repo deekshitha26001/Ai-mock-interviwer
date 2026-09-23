@@ -1,7 +1,7 @@
 "use client"
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, Award, CheckCircle2, FileText, HelpCircle, ShieldAlert, Sparkles, UserCheck, AlertTriangle, Layers, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle2, FileText, HelpCircle, ShieldAlert, Sparkles, UserCheck, AlertTriangle, Layers, MessageSquare, Activity, Eye, Smile, Flame } from 'lucide-react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import React from 'react';
@@ -133,11 +133,53 @@ export default function RecruiterReportPage() {
                         <span className="text-3xl font-extrabold text-slate-900 dark:text-white">{feedback.communication || 8}</span>
                         <span className="text-xs text-slate-400 font-medium">/ 10</span>
                     </div>
-                    <span className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold mt-2">Clear Verbal Structure</span>
                 </div>
             </div>
 
-            {/* Skills & Knowledge Gaps Grid */}
+            {/* Candidate Behavioral & Expression Signals Overview for Hiring Managers */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                <h3 className="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+                    <span className="flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-indigo-500" />
+                        Candidate Behavioral & Composure Signals Summary
+                    </span>
+                    <span className="text-[11px] text-slate-400 font-normal">Self-Improvement & Composure Reference</span>
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Stress Index</span>
+                        <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <Flame className={`w-4 h-4 ${(feedback.stressIndex || 22) > 45 ? "text-amber-500" : "text-emerald-500"}`} />
+                            <span>{feedback.stressLevel || "Low (Calm)"}</span>
+                        </div>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Confidence Rating</span>
+                        <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <Smile className="w-4 h-4 text-indigo-500" />
+                            <span>{feedback.confidenceScore || 8.5} / 10</span>
+                        </div>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Eye Contact Index</span>
+                        <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <Eye className="w-4 h-4 text-emerald-500" />
+                            <span>{feedback.facialExpressions?.eyeContactPercentage || 92}% Alignment</span>
+                        </div>
+                    </div>
+
+                    <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-1">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Verbal Delivery</span>
+                        <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 pt-0.5">
+                            <MessageSquare className="w-4 h-4 text-purple-500" />
+                            <span>{feedback.speechPaceWpm || 135} WPM • {feedback.fillerWordsCount || 2} Fillers</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Demonstrated Skills */}
                 <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">

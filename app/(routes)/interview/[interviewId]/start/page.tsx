@@ -5,13 +5,14 @@ import { useConvex, useMutation, useQuery } from 'convex/react';
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button';
-import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2, Camera, CameraOff, Eye, ShieldCheck, Edit3, Bookmark, BookmarkCheck, Keyboard } from 'lucide-react';
+import { Mic, MicOff, PhoneCall, PhoneOff, User, Volume2, Sparkles, CheckCircle2, MessageSquare, Send, ArrowLeft, AlertCircle, Loader2, Camera, CameraOff, Eye, ShieldCheck, Edit3, Bookmark, BookmarkCheck, Keyboard, Activity, Flame, Smile } from 'lucide-react';
 import { toast } from 'sonner';
 import { FeedbackInfo } from '@/app/(routes)/dashboard/_components/FeedbackDialog';
 import { Input } from '@/components/ui/input';
 import AudioVisualizer from './_components/AudioVisualizer';
 import QuestionTimer from './_components/QuestionTimer';
 import VoiceSettings from './_components/VoiceSettings';
+import { analyzeVideoFrame, FacialMetrics } from '@/utils/facialAnalysis';
 
 export type InterviewData = {
     jobTitle: string | null,
@@ -57,6 +58,16 @@ export default function StartInterview() {
     const [faceSignal, setFaceSignal] = useState<string>("Face Centered");
     const [cameraPermissionError, setCameraPermissionError] = useState<string | null>(null);
 
+    const [liveFacialMetrics, setLiveFacialMetrics] = useState<FacialMetrics>({
+        eyeContactPercentage: 92,
+        stressIndex: 18,
+        confidenceScore: 8.8,
+        primaryExpression: "Composed & Focused",
+        composureLevel: "High",
+        headPoseStatus: "Centered",
+        luminanceQuality: "Good"
+    });
+
     // AI Voice & Bookmarking State
     const [speechRate, setSpeechRate] = useState<number>(1.0);
     const [selectedVoiceName, setSelectedVoiceName] = useState<string>("");
@@ -66,6 +77,25 @@ export default function StartInterview() {
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
+
+    // Continuous Real-Time Video Frame Analyzer for Stress, Confidence & Facial Expression signals
+    useEffect(() => {
+        let interval: NodeJS.Timeout | null = null;
+        if (cameraOn && videoRef.current) {
+            interval = setInterval(() => {
+                if (videoRef.current) {
+                    const metrics = analyzeVideoFrame(videoRef.current);
+                    if (metrics) {
+                        setLiveFacialMetrics(metrics);
+                        setFaceSignal(`${metrics.headPoseStatus} (${metrics.eyeContactPercentage}% Eye Contact)`);
+                    }
+                }
+            }, 1200);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
+    }, [cameraOn]);
 
     const convex = useConvex();
     const updateFeedback = useMutation(api.Interview.UpdateFeedback);
@@ -697,9 +727,21 @@ export default function StartInterview() {
                         )}
 
                         {joined && cameraOn && (
-                            <div className="absolute top-3 left-3 bg-slate-900/80 backdrop-blur-md text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-slate-700">
-                                <Eye className="w-3 h-3 text-emerald-400" /> {faceSignal}
-                            </div>
+                            <>
+                                <div className="absolute top-3 left-3 bg-slate-900/85 backdrop-blur-md text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 border border-slate-700/80 text-slate-200">
+                                    <Eye className="w-3 h-3 text-emerald-400" /> {faceSignal}
+                                </div>
+                                <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2 pointer-events-none">
+                                    <div className="bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5 text-[10px] text-slate-300">
+                                        <Activity className="w-3 h-3 text-indigo-400" />
+                                        <span>Stress: <strong className={liveFacialMetrics.stressIndex > 45 ? "text-amber-400" : "text-emerald-400"}>{liveFacialMetrics.stressIndex}% ({liveFacialMetrics.composureLevel})</strong></span>
+                                    </div>
+                                    <div className="bg-slate-950/80 backdrop-blur-md px-2.5 py-1 rounded-xl border border-slate-800 flex items-center gap-1.5 text-[10px] text-slate-300">
+                                        <Smile className="w-3 h-3 text-amber-400" />
+                                        <span>Confidence: <strong className="text-white">{liveFacialMetrics.confidenceScore}/10</strong></span>
+                                    </div>
+                                </div>
+                            </>
                         )}
 
                         {joined && (

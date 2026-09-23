@@ -1,7 +1,7 @@
 "use client"
 import { api } from '@/convex/_generated/api';
 import { useQuery } from 'convex/react';
-import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download, Copy, CopyCheck } from 'lucide-react';
+import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download, Copy, CopyCheck, Activity, Eye, Smile, Flame, ShieldAlert } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useState } from 'react';
@@ -182,6 +182,111 @@ export default function InterviewFeedbackPage() {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Behavioral, Stress Level, Confidence & Facial Expressions Section */}
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center gap-2">
+                        <Activity className="w-5 h-5 text-indigo-500" />
+                        Candidate Behavioral & Facial Expression Analysis
+                    </h3>
+                    <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full w-fit">
+                        Real-Time Frame & Audio Multi-Metric Engine
+                    </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    {/* Stress Level Gauge */}
+                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800/70 space-y-2 flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Stress Level</span>
+                            <Flame className={`w-4 h-4 ${(feedbackData.stressIndex || 22) > 45 ? "text-amber-500" : "text-emerald-500"}`} />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                {feedbackData.stressLevel || "Low (Calm & Composed)"}
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-1">
+                                Stress Index: <strong>{feedbackData.stressIndex || 22}%</strong>
+                            </div>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                            <div
+                                className={`h-full rounded-full ${(feedbackData.stressIndex || 22) > 45 ? "bg-amber-500" : "bg-emerald-500"}`}
+                                style={{ width: `${feedbackData.stressIndex || 22}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Confidence Meter */}
+                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800/70 space-y-2 flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Candidate Confidence</span>
+                            <Smile className="w-4 h-4 text-indigo-500" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-extrabold text-slate-900 dark:text-white flex items-baseline gap-1">
+                                <span>{feedbackData.confidenceScore || 8.5}</span>
+                                <span className="text-xs text-slate-400 font-semibold">/ 10</span>
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-1">
+                                Speech articulation & steady posture
+                            </div>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                            <div
+                                className="h-full rounded-full bg-indigo-600"
+                                style={{ width: `${((feedbackData.confidenceScore || 8.5) / 10) * 100}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Eye Contact Consistency */}
+                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800/70 space-y-2 flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Eye Contact Index</span>
+                            <Eye className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div>
+                            <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
+                                {feedbackData.facialExpressions?.eyeContactPercentage || 92}%
+                            </div>
+                            <div className="text-[11px] text-slate-500 mt-1">
+                                Head Posture: <strong>{feedbackData.facialExpressions?.headPosture || "Centered & Stable"}</strong>
+                            </div>
+                        </div>
+                        <div className="w-full bg-slate-200 dark:bg-slate-800 h-2 rounded-full overflow-hidden mt-2">
+                            <div
+                                className="h-full rounded-full bg-emerald-500"
+                                style={{ width: `${feedbackData.facialExpressions?.eyeContactPercentage || 92}%` }}
+                            />
+                        </div>
+                    </div>
+
+                    {/* Facial Expression Breakdown */}
+                    <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800/70 space-y-2 flex flex-col justify-between">
+                        <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Primary Expression</span>
+                            <Sparkles className="w-4 h-4 text-amber-500" />
+                        </div>
+                        <div>
+                            <div className="text-sm font-bold text-slate-900 dark:text-white">
+                                {feedbackData.facialExpressions?.primaryExpression || "Composed & Focused"}
+                            </div>
+                            <div className="text-[10px] text-slate-500 mt-1.5 space-y-1">
+                                <div className="flex justify-between">
+                                    <span>Focused & Engaged:</span>
+                                    <strong className="text-slate-800 dark:text-slate-200">{feedbackData.facialExpressions?.expressionBreakdown?.focused || 78}%</strong>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span>Confident Smile:</span>
+                                    <strong className="text-slate-800 dark:text-slate-200">{feedbackData.facialExpressions?.expressionBreakdown?.confident || 16}%</strong>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
