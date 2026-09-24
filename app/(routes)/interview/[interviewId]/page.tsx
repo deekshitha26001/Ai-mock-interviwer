@@ -1,13 +1,14 @@
 "use client"
 import { api } from '@/convex/_generated/api'
-import { useQuery } from 'convex/react'
-import { ArrowLeft, ArrowRight, Camera, CameraOff, CheckCircle2, Code, Mic, MicOff, ShieldCheck, Sparkles, Video, AlertTriangle } from 'lucide-react'
+import { useQuery, useMutation } from 'convex/react'
+import { ArrowLeft, ArrowRight, Camera, CameraOff, CheckCircle2, Code, Mic, MicOff, ShieldCheck, Sparkles, Video, AlertTriangle, UserCheck, Check } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import React, { useEffect, useRef, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { INTERVIEWER_CONFIGS } from '@/utils/interviewerConfig'
 
 export default function InterviewPreparationPage() {
     const { interviewId } = useParams();
@@ -16,17 +17,41 @@ export default function InterviewPreparationPage() {
     const [webcamEnabled, setWebcamEnabled] = useState(false);
     const [micEnabled, setMicEnabled] = useState(false);
     const [permissionError, setPermissionError] = useState<string | null>(null);
-
     const [mediaStream, setMediaStream] = useState<MediaStream | null>(null);
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const mediaStreamRef = useRef<MediaStream | null>(null);
+
+    const updateInterviewerGender = useMutation(api.Interview.UpdateInterviewerGender);
 
     // Fetch session record from Convex
     const record = useQuery(
         api.Interview.GetInterviewQuestions,
         interviewId ? { interviewRecordId: interviewId as any } : "skip"
     );
+
+    const [selectedGender, setSelectedGender] = useState<'male' | 'female'>('female');
+
+    useEffect(() => {
+        if (record?.interviewerGender === 'male' || record?.interviewerGender === 'female') {
+            setSelectedGender(record.interviewerGender as 'male' | 'female');
+        }
+    }, [record?.interviewerGender]);
+
+    const handleSelectGender = async (gender: 'male' | 'female') => {
+        setSelectedGender(gender);
+        if (interviewId) {
+            try {
+                await updateInterviewerGender({
+                    recordId: interviewId as any,
+                    interviewerGender: gender
+                });
+                toast.success(`Selected ${gender === 'male' ? 'Male (Alex Vance)' : 'Female (Sarah Jenkins)'} AI Interviewer`);
+            } catch (err) {
+                console.warn("Failed to persist interviewer choice:", err);
+            }
+        }
+    };
 
     // Clean up media tracks on unmount
     useEffect(() => {
@@ -165,6 +190,87 @@ export default function InterviewPreparationPage() {
                                 </p>
                             </div>
                         )}
+                    </div>
+
+                    {/* Choose Your AI Interviewer */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-4">
+                        <div className="flex items-center justify-between">
+                            <h3 className="font-bold text-slate-900 dark:text-white flex items-center gap-2 text-sm">
+                                <UserCheck className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+                                Choose Your AI Interviewer
+                            </h3>
+                            <Badge variant="secondary" className="text-[10px] font-semibold bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                                Option Selected
+                            </Badge>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {/* Male Interviewer */}
+                            <div
+                                onClick={() => handleSelectGender('male')}
+                                className={`cursor-pointer rounded-2xl p-4 border-2 transition-all flex flex-col justify-between space-y-3 relative ${
+                                    selectedGender === 'male'
+                                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 dark:border-indigo-500 shadow-md ring-2 ring-indigo-500/20'
+                                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="relative shrink-0">
+                                        <img
+                                            src="/avatars/male.jpg"
+                                            alt="Male AI Interviewer"
+                                            className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-sm"
+                                        />
+                                        {selectedGender === 'male' && (
+                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs shadow">✓</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">👨 Male</span>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Alex Vance</h4>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    "Professional & structured interviewer"
+                                </p>
+                                <div className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                                    <span>Voice: Male AI (Structured & Direct)</span>
+                                </div>
+                            </div>
+
+                            {/* Female Interviewer */}
+                            <div
+                                onClick={() => handleSelectGender('female')}
+                                className={`cursor-pointer rounded-2xl p-4 border-2 transition-all flex flex-col justify-between space-y-3 relative ${
+                                    selectedGender === 'female'
+                                        ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 dark:border-indigo-500 shadow-md ring-2 ring-indigo-500/20'
+                                        : 'border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 hover:border-slate-300 dark:hover:border-slate-700'
+                                }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="relative shrink-0">
+                                        <img
+                                            src="/avatars/female.jpg"
+                                            alt="Female AI Interviewer"
+                                            className="w-12 h-12 rounded-full object-cover border-2 border-white dark:border-slate-800 shadow-sm"
+                                        />
+                                        {selectedGender === 'female' && (
+                                            <span className="absolute -bottom-1 -right-1 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xs shadow">✓</span>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider block">👩 Female</span>
+                                        <h4 className="text-sm font-bold text-slate-900 dark:text-white">Sarah Jenkins</h4>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                                    "Professional & conversational interviewer"
+                                </p>
+                                <div className="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+                                    <span>Voice: Female AI (Conversational & Clear)</span>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     {/* Guidelines Box */}

@@ -13,8 +13,9 @@ import AudioVisualizer from './_components/AudioVisualizer';
 import QuestionTimer from './_components/QuestionTimer';
 import VoiceSettings from './_components/VoiceSettings';
 import { analyzeVideoFrame, FacialMetrics } from '@/utils/facialAnalysis';
-import { uploadRecordingToCloud } from '@/utils/recordingStorage';
+import { uploadRecordingToCloud, getRecordingBlob } from '@/utils/recordingStorage';
 import { useUser } from '@clerk/nextjs';
+import { getInterviewerConfig, getGenderVoice } from '@/utils/interviewerConfig';
 
 export type InterviewData = {
     jobTitle: string | null,
@@ -267,8 +268,13 @@ export default function StartInterview() {
     };
 
     const retryCloudUpload = async () => {
-        if (lastVideoBlobRef.current) {
-            await uploadVideoToCloudStorage(lastVideoBlobRef.current);
+        let blobToUpload = lastVideoBlobRef.current;
+        if (!blobToUpload && interviewId) {
+            blobToUpload = await getRecordingBlob(interviewId as string);
+        }
+        if (blobToUpload) {
+            toast.info("Retrying persistent video recording upload...");
+            await uploadVideoToCloudStorage(blobToUpload);
         } else {
             toast.error("No recorded media blob available to retry.");
         }
@@ -435,6 +441,8 @@ export default function StartInterview() {
         });
     }, [interviewId, rawRecord]);
 
+    const interviewerInfo = getInterviewerConfig(rawRecord?.interviewerGender);
+
     const speakText = (text: string) => {
         if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
             try {
@@ -447,10 +455,8 @@ export default function StartInterview() {
                 let selected = voices.find(v => v.name === selectedVoiceName);
 
                 if (!selected) {
-                    selected = voices.find(v =>
-                        (v.name.includes("Google") || v.name.includes("Natural") || v.name.includes("Samantha") || v.name.includes("Zira") || v.name.includes("David")) &&
-                        v.lang.startsWith("en")
-                    ) || voices.find(v => v.lang.startsWith("en"));
+                    const gender = (rawRecord?.interviewerGender as 'male' | 'female') || 'female';
+                    selected = getGenderVoice(voices, gender) || voices[0];
                 }
 
                 if (selected) {
@@ -491,6 +497,8 @@ export default function StartInterview() {
         });
     };
 
+    const [followUpAsked, setFollowUpAsked] = useState(false);
+
     const StartConversation = async () => {
         setLoadingCall(true);
 
@@ -498,17 +506,18 @@ export default function StartInterview() {
         await startRecordingSession();
 
         const questionsList = interviewData?.interviewQuestions || [];
-        const firstQ = questionsList[0]?.question || "Tell me about yourself and your background.";
+        const firstQ = questionsList[0]?.question || "Tell me about yourself and your technical background.";
 
         setJoined(true);
         setCurrentQuestionIndex(0);
+        setFollowUpAsked(false);
 
-        const welcomeMsg = `Welcome to your MAPD AI Mock Interview for ${interviewData?.jobTitle || 'this position'}. Question 1: ${firstQ}`;
+        const welcomeMsg = `Welcome to your interview for the ${interviewData?.jobTitle || 'technical'} position. Let's get started. ${firstQ}`;
         setMessages([
             { from: 'bot', text: welcomeMsg }
         ]);
         speakText(welcomeMsg);
-        toast.info("AI Recruiter Interview Connected!");
+        toast.info("AI Human Interviewer Connected!");
         setLoadingCall(false);
     };
 
@@ -618,27 +627,35 @@ export default function StartInterview() {
 
         setUserInputText("");
 
-        try {
-            const followUpRes = await axios.post('/api/generate-followup-question', {
-                currentQuestion: currentQText,
-                candidateAnswer: text,
-                jobTitle: interviewData?.jobTitle,
-                techStack: interviewData?.techStack
-            });
+        // Check if we should ask an adaptive follow-up
+        if (!followUpAsked) {
+            try {
+                const followUpRes = await axios.post('/api/generate-followup-question', {
+                    currentQuestion: currentQText,
+                    candidateAnswer: text,
+                    jobTitle: interviewData?.jobTitle,
+                    techStack: interviewData?.techStack,
+                    experienceLevel: interviewData?.experienceLevel,
+                    currentPhase: currentQuestionIndex + 1
+                });
 
-            if (followUpRes.data?.hasFollowUp && followUpRes.data?.followUpQuestion) {
-                const followUpText = followUpRes.data.followUpQuestion;
-                const botFollowUpMsg = `Follow-Up: ${followUpText}`;
-                updatedMessages.push({ from: 'bot', text: botFollowUpMsg, isFollowUp: true });
-                setMessages(updatedMessages);
-                speakText(botFollowUpMsg);
-                return;
+                if (followUpRes.data?.hasFollowUp && followUpRes.data?.followUpQuestion) {
+                    const followUpText = followUpRes.data.followUpQuestion;
+                    setFollowUpAsked(true);
+                    updatedMessages.push({ from: 'bot', text: followUpText, isFollowUp: true });
+                    setMessages(updatedMessages);
+                    speakText(followUpText);
+                    return;
+                }
+            } catch (fErr) {
+                console.warn("Follow-up evaluation skipped:", fErr);
             }
-        } catch (fErr) {
-            console.warn("Follow-up check skipped:", fErr);
         }
 
+        // Progress to next question/phase
+        setFollowUpAsked(false);
         const nextIdx = currentQuestionIndex + 1;
+
         if (nextIdx < questionsList.length) {
             const nextQ = questionsList[nextIdx].question;
             setCurrentQuestionIndex(nextIdx);
@@ -653,12 +670,12 @@ export default function StartInterview() {
                 }
             ]);
 
-            const botReply = `Thank you. Question ${nextIdx + 1}: ${nextQ}`;
+            const botReply = `${nextQ}`;
             updatedMessages.push({ from: 'bot', text: botReply });
             setMessages(updatedMessages);
             speakText(botReply);
         } else {
-            const endMsg = "Excellent! You have answered all interview questions. Click 'End Call' to generate your performance feedback report.";
+            const endMsg = "Thank you so much! That completes our technical and behavioral interview session. Click 'End Call' to generate your comprehensive performance feedback report.";
             updatedMessages.push({ from: 'bot', text: endMsg });
             setMessages(updatedMessages);
             speakText(endMsg);
@@ -997,6 +1014,31 @@ export default function StartInterview() {
 
                 {/* RIGHT SIDE: Camera Stage & Live Transcript (5 cols) */}
                 <div className="lg:col-span-5 space-y-6 flex flex-col">
+                    {/* Selected AI Interviewer Identity Card */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={interviewerInfo.avatar}
+                                alt={interviewerInfo.name}
+                                className="w-12 h-12 rounded-full object-cover border-2 border-indigo-500 shadow-md shrink-0"
+                            />
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">{interviewerInfo.name}</h3>
+                                    <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50">
+                                        {interviewerInfo.gender === 'male' ? '👨 Male' : '👩 Female'}
+                                    </span>
+                                </div>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{interviewerInfo.title}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2.5 py-1 rounded-full border border-emerald-200/50 flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Active AI
+                            </span>
+                        </div>
+                    </div>
+
                     <div className="w-full h-56 rounded-3xl bg-slate-900 border border-slate-800 overflow-hidden relative flex flex-col items-center justify-center text-white shadow-lg">
                         {cameraOn ? (
                             <video
@@ -1062,7 +1104,7 @@ export default function StartInterview() {
                                             className={`flex flex-col ${msg.from === 'user' ? 'items-end' : 'items-start'}`}
                                         >
                                             <span className="text-[10px] font-semibold text-slate-400 mb-0.5 px-1">
-                                                {msg.from === 'user' ? 'Candidate' : msg.isFollowUp ? 'MAPD Recruiter (Follow-Up)' : 'MAPD Recruiter'}
+                                                {msg.from === 'user' ? 'Candidate' : msg.isFollowUp ? `${interviewerInfo.name} (Follow-Up)` : interviewerInfo.name}
                                             </span>
                                             <div
                                                 className={`p-3 rounded-2xl text-xs max-w-[90%] leading-relaxed ${

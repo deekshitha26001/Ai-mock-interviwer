@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { deleteCloudRecording, getRecordingPlaybackUrl } from '@/utils/recordingStorage';
 import { toast } from 'sonner';
+import { getInterviewerConfig } from '@/utils/interviewerConfig';
 
 export default function InterviewPlaybackPage() {
     const { interviewId } = useParams();
@@ -150,6 +151,7 @@ export default function InterviewPlaybackPage() {
     }));
 
     const candidateAnswers: any[] = record?.candidateAnswers || [];
+    const interviewerConfig = getInterviewerConfig(record?.interviewerGender);
 
     if (!record) {
         return (
@@ -264,6 +266,29 @@ export default function InterviewPlaybackPage() {
 
                 {/* RIGHT SIDE: Questions Timeline & Transcript (5 cols) */}
                 <div className="lg:col-span-5 space-y-6">
+                    {/* Selected AI Interviewer Details Card */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-4 shadow-sm flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <img
+                                src={interviewerConfig.avatar}
+                                alt={interviewerConfig.name}
+                                className="w-11 h-11 rounded-full object-cover border-2 border-indigo-500 shadow-sm shrink-0"
+                            />
+                            <div>
+                                <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-slate-900 dark:text-white">{interviewerConfig.name}</span>
+                                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400">
+                                        {interviewerConfig.gender === 'male' ? '👨 Male' : '👩 Female'}
+                                    </span>
+                                </div>
+                                <p className="text-[10px] text-slate-500 dark:text-slate-400">{interviewerConfig.title}</p>
+                            </div>
+                        </div>
+                        <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-2.5 py-1 rounded-full border border-indigo-200/50">
+                            Assigned Interviewer
+                        </span>
+                    </div>
+
                     {/* Timestamp Navigation List */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-sm space-y-4">
                         <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">

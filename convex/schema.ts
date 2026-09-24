@@ -26,6 +26,7 @@ export default defineSchema({
         storageProvider: v.optional(v.union(v.string(), v.null())),
         questionTimestamps: v.optional(v.any()),
         candidateAnswers: v.optional(v.any()),
-        weakTopics: v.optional(v.any())
+        weakTopics: v.optional(v.any()),
+        interviewerGender: v.optional(v.union(v.string(), v.null()))
     })
 })

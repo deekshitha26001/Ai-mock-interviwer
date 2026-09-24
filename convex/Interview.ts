@@ -10,6 +10,7 @@ export const SaveInterviewQuestion = mutation({
         jobDescription: v.optional(v.string()),
         experienceLevel: v.optional(v.string()),
         techStack: v.optional(v.string()),
+        interviewerGender: v.optional(v.string()),
     },
     handler: async (ctx, args) => {
         const result = await ctx.db.insert('InterviewSessionTable', {
@@ -21,6 +22,7 @@ export const SaveInterviewQuestion = mutation({
             jobDescription: args.jobDescription ?? null,
             experienceLevel: args.experienceLevel ?? null,
             techStack: args.techStack ?? null,
+            interviewerGender: args.interviewerGender ?? 'female',
         });
         return result;
     }
@@ -179,5 +181,33 @@ export const DeleteInterview = mutation({
 
         await ctx.db.delete(args.recordId);
         return true;
+    }
+});
+
+export const UpdateInterviewerGender = mutation({
+    args: {
+        recordId: v.id('InterviewSessionTable'),
+        interviewerGender: v.string(),
+        uid: v.optional(v.id('UserTable'))
+    },
+    handler: async (ctx, args) => {
+        const existing = await ctx.db.get(args.recordId);
+        if (!existing) {
+            throw new Error("Interview session not found");
+        }
+        if (args.uid && existing.userId !== args.uid) {
+            throw new Error("Unauthorized to update interviewer choice");
+        }
+        await ctx.db.patch(args.recordId, {
+            interviewerGender: args.interviewerGender
+        });
+        return true;
+    }
+});
+
+export const GenerateUploadUrl = mutation({
+    args: {},
+    handler: async (ctx) => {
+        return await ctx.storage.generateUploadUrl();
     }
 });

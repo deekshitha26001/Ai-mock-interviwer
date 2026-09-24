@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { createClient } from "@supabase/supabase-js";
 import ImageKit from "imagekit";
+import { ConvexHttpClient } from "convex/browser";
+import { api } from "@/convex/_generated/api";
 import fs from "fs";
 import path from "path";
 
@@ -98,7 +100,35 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Provider 3: Persistent Server Disk Storage Fallback
+        // Provider 3: Convex Cloud Object Storage (Zero-dependency persistent storage)
+        const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL || process.env.CONVEX_URL;
+        if (!recordingUrl && convexUrl && !convexUrl.includes("dummy")) {
+            try {
+                const convexClient = new ConvexHttpClient(convexUrl);
+                const uploadUrl = await convexClient.mutation(api.Interview.GenerateUploadUrl);
+                if (uploadUrl) {
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: "POST",
+                        headers: { "Content-Type": file.type || "video/webm" },
+                        body: buffer
+                    });
+
+                    if (uploadRes.ok) {
+                        const { storageId } = await uploadRes.json();
+                        if (storageId) {
+                            recordingUrl = `${convexUrl}/api/storage/${storageId}`;
+                            storageProvider = "convex";
+                        }
+                    } else {
+                        console.warn("Convex upload HTTP error:", uploadRes.statusText);
+                    }
+                }
+            } catch (convexErr) {
+                console.warn("Convex storage upload exception:", convexErr);
+            }
+        }
+
+        // Provider 4: Persistent Server Disk Storage Fallback
         if (!recordingUrl) {
             try {
                 const uploadsDir = path.join(process.cwd(), "public", "uploads", "recordings");

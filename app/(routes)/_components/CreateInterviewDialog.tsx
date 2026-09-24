@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import axios from 'axios'
-import { Loader2Icon, UploadCloud, FileText, X, Sparkles, Briefcase, Code, Clock, CheckCircle2 } from 'lucide-react'
+import { Loader2Icon, UploadCloud, FileText, X, Sparkles, Briefcase, Code, Clock, CheckCircle2, UserCheck } from 'lucide-react'
 import { useMutation } from 'convex/react'
 import { api } from '@/convex/_generated/api'
 import { UserDetailContext } from '@/context/UserDetailContext'
@@ -25,6 +25,7 @@ function CreateInterviewDialog() {
     const [jobDescription, setJobDescription] = useState('');
     const [techStack, setTechStack] = useState('');
     const [experienceLevel, setExperienceLevel] = useState('1–2 years');
+    const [interviewerGender, setInterviewerGender] = useState<'male' | 'female'>('female');
     const [file, setFile] = useState<File | null>(null);
     const [fileError, setFileError] = useState<string | null>(null);
 
@@ -146,7 +147,8 @@ function CreateInterviewDialog() {
                 jobTitle: jobTitle,
                 jobDescription: jobDescription,
                 experienceLevel: experienceLevel,
-                techStack: techStack || jobTitle
+                techStack: techStack || jobTitle,
+                interviewerGender: interviewerGender
             });
 
             toast.success("AI Interview created successfully!");
@@ -248,6 +250,75 @@ function CreateInterviewDialog() {
                                         <option value="2–3 years">2–3 years</option>
                                         <option value="3+ years">3+ years (Senior)</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            {/* Choose Your AI Interviewer */}
+                            <div className="space-y-2">
+                                <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+                                    <span className="flex items-center gap-1.5">
+                                        <UserCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                        Choose Your AI Interviewer <span className="text-rose-500">*</span>
+                                    </span>
+                                </label>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {/* Male Card */}
+                                    <div
+                                        onClick={() => setInterviewerGender('male')}
+                                        className={`cursor-pointer rounded-xl p-3 border-2 transition-all flex items-center gap-3 ${
+                                            interviewerGender === 'male'
+                                                ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 dark:border-indigo-500 shadow-sm'
+                                                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className="relative shrink-0">
+                                            <img
+                                                src="/avatars/male.jpg"
+                                                alt="Male AI Interviewer"
+                                                className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm"
+                                            />
+                                            {interviewerGender === 'male' && (
+                                                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white text-[10px]">✓</span>
+                                            )}
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">👨 Male</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                                Professional & structured
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Female Card */}
+                                    <div
+                                        onClick={() => setInterviewerGender('female')}
+                                        className={`cursor-pointer rounded-xl p-3 border-2 transition-all flex items-center gap-3 ${
+                                            interviewerGender === 'female'
+                                                ? 'border-indigo-600 bg-indigo-50/70 dark:bg-indigo-950/60 dark:border-indigo-500 shadow-sm'
+                                                : 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:border-slate-300 dark:hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className="relative shrink-0">
+                                            <img
+                                                src="/avatars/female.jpg"
+                                                alt="Female AI Interviewer"
+                                                className="w-10 h-10 rounded-full object-cover border border-slate-200 dark:border-slate-700 shadow-sm"
+                                            />
+                                            {interviewerGender === 'female' && (
+                                                <span className="absolute -bottom-1 -right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white text-[10px]">✓</span>
+                                            )}
+                                        </div>
+                                        <div className="overflow-hidden">
+                                            <div className="flex items-center gap-1">
+                                                <span className="text-xs font-bold text-slate-900 dark:text-white">👩 Female</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-500 dark:text-slate-400 line-clamp-1">
+                                                Professional & conversational
+                                            </p>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 

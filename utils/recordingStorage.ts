@@ -1,6 +1,6 @@
 /**
  * MAPD Unified Persistent Recording Storage Manager
- * Uploads MediaRecorder video blobs to persistent cloud / server storage,
+ * Uploads MediaRecorder video blobs to persistent cloud storage,
  * while maintaining a local IndexedDB buffer for zero-loss offline resilience.
  */
 
@@ -88,8 +88,9 @@ export async function getRecordingBlob(interviewId: string): Promise<Blob | null
 }
 
 /**
- * Upload MediaRecorder video blob to persistent cloud / server storage with progress tracking.
- * Retains local IndexedDB buffer if upload fails so the user can retry without losing their video.
+ * Upload MediaRecorder video blob to persistent cloud storage with progress tracking.
+ * Primary method: Direct upload to Convex Cloud Object Storage (bypasses Vercel serverless payload limits).
+ * Fallback method: API route /api/upload-recording.
  */
 export async function uploadRecordingToCloud(
     interviewId: string,
@@ -97,9 +98,81 @@ export async function uploadRecordingToCloud(
     durationSeconds: number,
     onProgress?: (progressPercent: number) => void
 ): Promise<RecordingUploadResult> {
-    // Save to local IndexedDB first as a non-destructive backup
+    // 1. Save to local IndexedDB first as a non-destructive offline backup
     await saveRecordingBlob(interviewId, videoBlob);
 
+    const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
+
+    // Strategy 1: Direct Convex Storage Upload (No Vercel 4.5MB payload limits or timeouts)
+    if (convexUrl && !convexUrl.includes("dummy")) {
+        try {
+            // Obtain signed upload URL via Convex HTTP mutation
+            const genRes = await fetch(`${convexUrl}/api/mutation`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    path: "Interview:GenerateUploadUrl",
+                    args: {},
+                    format: "json"
+                })
+            });
+
+            if (genRes.ok) {
+                const genData = await genRes.json();
+                const uploadUrl = genData.value || genData.result;
+
+                if (uploadUrl && typeof uploadUrl === "string") {
+                    const storageId = await new Promise<string>((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open("POST", uploadUrl, true);
+                        xhr.setRequestHeader("Content-Type", videoBlob.type || "video/webm");
+
+                        if (xhr.upload && onProgress) {
+                            xhr.upload.onprogress = (event) => {
+                                if (event.lengthComputable) {
+                                    const percent = Math.round((event.loaded / event.total) * 100);
+                                    onProgress(percent);
+                                }
+                            };
+                        }
+
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                try {
+                                    const res = JSON.parse(xhr.responseText);
+                                    if (res.storageId) {
+                                        resolve(res.storageId);
+                                    } else {
+                                        reject(new Error("Convex upload response missing storageId"));
+                                    }
+                                } catch (e) {
+                                    reject(new Error("Failed to parse Convex upload response"));
+                                }
+                            } else {
+                                reject(new Error(`Convex direct upload failed with HTTP ${xhr.status}`));
+                            }
+                        };
+
+                        xhr.onerror = () => reject(new Error("Network error during direct Convex upload"));
+                        xhr.send(videoBlob);
+                    });
+
+                    const recordingUrl = `${convexUrl}/api/storage/${storageId}`;
+                    return {
+                        recordingUrl,
+                        recordingId: storageId,
+                        fileSize: videoBlob.size,
+                        storageType: "cloud",
+                        storageProvider: "convex"
+                    };
+                }
+            }
+        } catch (convexDirectErr) {
+            console.warn("Direct Convex upload attempt notice, trying fallback API route:", convexDirectErr);
+        }
+    }
+
+    // Strategy 2: Fallback to API Route (/api/upload-recording)
     return new Promise((resolve, reject) => {
         const formData = new FormData();
         formData.append("file", videoBlob, `interview_${interviewId}.webm`);
@@ -133,7 +206,12 @@ export async function uploadRecordingToCloud(
                     reject(new Error("Invalid server response format"));
                 }
             } else {
-                reject(new Error(`Upload failed with status ${xhr.status}`));
+                let errDetail = `HTTP ${xhr.status}`;
+                try {
+                    const parsedErr = JSON.parse(xhr.responseText);
+                    if (parsedErr.error) errDetail = parsedErr.error;
+                } catch (e) {}
+                reject(new Error(`Upload failed: ${errDetail}`));
             }
         };
 
