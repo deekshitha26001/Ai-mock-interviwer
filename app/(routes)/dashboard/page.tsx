@@ -9,8 +9,10 @@ import { InterviewData } from '../interview/[interviewId]/start/page';
 import EmptyState from './_components/EmptyState';
 import InterviewCard from './_components/InterviewCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Award, CheckCircle2, Clock, Layers, Sparkles } from 'lucide-react';
+import { Award, CheckCircle2, Clock, Layers, Sparkles, Filter, Search } from 'lucide-react';
 import SavedFlashcards from './_components/SavedFlashcards';
+import ProgressAnalytics from './_components/ProgressAnalytics';
+import { Input } from '@/components/ui/input';
 
 export default function Dashboard() {
     const { user } = useUser();
@@ -18,6 +20,11 @@ export default function Dashboard() {
     const { userDetail } = useContext(UserDetailContext);
     const [loading, setLoading] = useState(true);
     const convex = useConvex();
+
+    // Filters State
+    const [roleFilter, setRoleFilter] = useState('');
+    const [statusFilter, setStatusFilter] = useState('all');
+    const [minScoreFilter, setMinScoreFilter] = useState('all');
 
     useEffect(() => {
         if (userDetail?._id) {
@@ -48,7 +55,7 @@ export default function Dashboard() {
         }
     };
 
-    // Calculate dynamic stats
+    // Calculate stats
     const totalInterviews = interviewList.length;
     const completedInterviews = interviewList.filter(i => i.status === 'complete').length;
 
@@ -58,6 +65,23 @@ export default function Dashboard() {
         : "N/A";
 
     const totalHours = (totalInterviews * 0.5).toFixed(1);
+
+    // Filter Logic
+    const filteredInterviews = interviewList.filter(interview => {
+        const matchesRole = roleFilter === '' ||
+            (interview.jobTitle || '').toLowerCase().includes(roleFilter.toLowerCase()) ||
+            (interview.techStack || '').toLowerCase().includes(roleFilter.toLowerCase());
+
+        const matchesStatus = statusFilter === 'all' || interview.status === statusFilter;
+
+        const rating = interview.feedback?.rating || 0;
+        let matchesScore = true;
+        if (minScoreFilter === 'high') matchesScore = rating >= 8;
+        else if (minScoreFilter === 'mid') matchesScore = rating >= 6 && rating < 8;
+        else if (minScoreFilter === 'low') matchesScore = rating < 6;
+
+        return matchesRole && matchesStatus && matchesScore;
+    });
 
     return (
         <div className="max-w-7xl mx-auto py-8 px-4 md:px-8 space-y-8 min-h-[calc(100vh-80px)]">
@@ -72,7 +96,7 @@ export default function Dashboard() {
                         Welcome back, {user?.firstName || user?.fullName || 'Candidate'}!
                     </h1>
                     <p className="text-xs md:text-sm text-slate-300 font-medium pt-0.5">
-                        Practice smarter. Interview better. Get hired.
+                        MAPD AI Technical Recruiter & Interview Practice Platform
                     </p>
                 </div>
                 <div className="z-10 flex items-center gap-3">
@@ -124,15 +148,49 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Sessions Grid */}
+            {/* Performance Analytics & Skill Trajectory */}
+            <ProgressAnalytics interviewList={interviewList} />
+
+            {/* My Interviews Section & Filters Bar */}
             <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
                     <h2 className="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-indigo-500" /> Recent Mock Interviews
+                        <Sparkles className="w-4 h-4 text-indigo-500" /> My Interviews
                     </h2>
-                    <span className="text-xs text-slate-500 font-medium">
-                        Showing {interviewList.length} interview sessions
-                    </span>
+
+                    {/* Filter Inputs */}
+                    <div className="flex flex-wrap items-center gap-3 text-xs">
+                        <div className="relative w-48">
+                            <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                            <Input
+                                placeholder="Filter by role / tech..."
+                                value={roleFilter}
+                                onChange={(e) => setRoleFilter(e.target.value)}
+                                className="pl-8 text-xs rounded-xl h-8"
+                            />
+                        </div>
+
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none"
+                        >
+                            <option value="all">All Statuses</option>
+                            <option value="complete">Completed</option>
+                            <option value="draft">Draft</option>
+                        </select>
+
+                        <select
+                            value={minScoreFilter}
+                            onChange={(e) => setMinScoreFilter(e.target.value)}
+                            className="text-xs rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-1.5 text-slate-700 dark:text-slate-300 focus:outline-none"
+                        >
+                            <option value="all">All Scores</option>
+                            <option value="high">High Score (8+)</option>
+                            <option value="mid">Mid Score (6–7.9)</option>
+                            <option value="low">Needs Improvement (&lt;6)</option>
+                        </select>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -145,11 +203,11 @@ export default function Dashboard() {
                             </div>
                         ))}
                     </div>
-                ) : interviewList.length === 0 ? (
+                ) : filteredInterviews.length === 0 ? (
                     <EmptyState />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {interviewList.map((interview, index) => (
+                        {filteredInterviews.map((interview, index) => (
                             <InterviewCard
                                 interviewInfo={interview}
                                 key={interview._id || index}

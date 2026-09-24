@@ -17,6 +17,15 @@ export default defineSchema({
         jobDescription: v.union(v.string(), v.null()),
         experienceLevel: v.optional(v.union(v.string(), v.null())),
         techStack: v.optional(v.union(v.string(), v.null())),
-        feedback: v.optional(v.any())
+        feedback: v.optional(v.any()),
+        recordingUrl: v.optional(v.union(v.string(), v.null())),
+        recordingId: v.optional(v.union(v.string(), v.null())),
+        recordingStorageId: v.optional(v.union(v.string(), v.null())),
+        fileSize: v.optional(v.union(v.number(), v.null())),
+        durationSeconds: v.optional(v.union(v.number(), v.null())),
+        storageProvider: v.optional(v.union(v.string(), v.null())),
+        questionTimestamps: v.optional(v.any()),
+        candidateAnswers: v.optional(v.any()),
+        weakTopics: v.optional(v.any())
     })
 })
