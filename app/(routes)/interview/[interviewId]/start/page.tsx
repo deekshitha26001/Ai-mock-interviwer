@@ -24,6 +24,7 @@ export type InterviewData = {
     interviewQuestions: InterviewQuestions[],
     userId: string | null,
     _id: string,
+    _creationTime?: number,
     resumeUrl: string | null,
     status: string | null,
     feedback?: FeedbackInfo | null,
@@ -288,9 +289,9 @@ export default function StartInterview() {
         try {
             recordedChunksRef.current = [];
             let options: MediaRecorderOptions = { mimeType: 'video/webm;codecs=vp9,opus' };
-            if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+            if (options.mimeType && !MediaRecorder.isTypeSupported(options.mimeType)) {
                 options = { mimeType: 'video/webm;codecs=vp8,opus' };
-                if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+                if (options.mimeType && !MediaRecorder.isTypeSupported(options.mimeType)) {
                     options = { mimeType: 'video/webm' };
                 }
             }
