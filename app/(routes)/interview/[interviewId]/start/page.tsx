@@ -449,13 +449,15 @@ export default function StartInterview() {
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.rate = speechRate || 1.0;
-                utterance.pitch = 1.0;
+
+                const gender = (rawRecord?.interviewerGender as 'male' | 'female') || 'female';
+                // Distinct acoustic pitch for male vs female AI
+                utterance.pitch = gender === 'male' ? 0.9 : 1.1;
 
                 const voices = window.speechSynthesis.getVoices();
                 let selected = voices.find(v => v.name === selectedVoiceName);
 
                 if (!selected) {
-                    const gender = (rawRecord?.interviewerGender as 'male' | 'female') || 'female';
                     selected = getGenderVoice(voices, gender) || voices[0];
                 }
 
@@ -783,6 +785,7 @@ export default function StartInterview() {
                         setSpeechRate={setSpeechRate}
                         selectedVoiceName={selectedVoiceName}
                         setSelectedVoiceName={setSelectedVoiceName}
+                        interviewerGender={(rawRecord?.interviewerGender as 'male' | 'female') || 'female'}
                     />
 
                     {!joined ? (
