@@ -146,6 +146,7 @@ export default function StartInterview() {
     const convex = useConvex();
     const updateFeedback = useMutation(api.Interview.UpdateFeedback);
     const saveInterviewRecording = useMutation(api.Interview.SaveInterviewRecording);
+    const generateUploadUrl = useMutation(api.Interview.GenerateUploadUrl);
 
     // Fetch interview record from Convex
     const rawRecord = useQuery(
@@ -230,30 +231,86 @@ export default function StartInterview() {
         setUploadProgress(0);
 
         try {
-            toast.info("Uploading recording to persistent storage...");
-            const res = await uploadRecordingToCloud(
-                interviewId,
-                videoBlob,
-                recordingDuration,
-                (pct) => setUploadProgress(pct)
-            );
+            toast.info("Uploading recording to persistent cloud storage...");
+            
+            let recordingUrl = "";
+            let storageId = "";
+            let provider = "convex";
 
-            if (res.recordingUrl) {
-                setSavedRecordingUrl(res.recordingUrl);
-                setSavedRecordingId(res.recordingId || '');
-                setSavedFileSize(res.fileSize || videoBlob.size);
-                setSavedStorageProvider(res.storageProvider || 'cloud');
+            // 1. Direct upload using Convex Cloud Object Storage signed upload URL
+            try {
+                const uploadUrl = await generateUploadUrl();
+                if (uploadUrl) {
+                    storageId = await new Promise<string>((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open("POST", uploadUrl, true);
+                        xhr.setRequestHeader("Content-Type", videoBlob.type || "video/webm");
+
+                        if (xhr.upload) {
+                            xhr.upload.onprogress = (event) => {
+                                if (event.lengthComputable) {
+                                    const percent = Math.round((event.loaded / event.total) * 100);
+                                    setUploadProgress(percent);
+                                }
+                            };
+                        }
+
+                        xhr.onload = () => {
+                            if (xhr.status >= 200 && xhr.status < 300) {
+                                try {
+                                    const res = JSON.parse(xhr.responseText);
+                                    if (res.storageId) {
+                                        resolve(res.storageId);
+                                    } else {
+                                        reject(new Error("Storage ID missing in response"));
+                                    }
+                                } catch (e) {
+                                    reject(e);
+                                }
+                            } else {
+                                reject(new Error(`Upload failed HTTP ${xhr.status}`));
+                            }
+                        };
+
+                        xhr.onerror = () => reject(new Error("Network error during direct cloud video upload"));
+                        xhr.send(videoBlob);
+                    });
+
+                    recordingUrl = storageId;
+                }
+            } catch (convexErr) {
+                console.warn("Direct Convex storage upload notice, trying backup upload manager:", convexErr);
+            }
+
+            // 2. Fallback to unified upload manager
+            if (!storageId) {
+                const res = await uploadRecordingToCloud(
+                    interviewId,
+                    videoBlob,
+                    recordingDuration,
+                    (pct) => setUploadProgress(pct)
+                );
+                recordingUrl = res.recordingUrl;
+                storageId = res.recordingId || '';
+                provider = res.storageProvider || 'cloud';
+            }
+
+            if (recordingUrl || storageId) {
+                setSavedRecordingUrl(recordingUrl);
+                setSavedRecordingId(storageId);
+                setSavedFileSize(videoBlob.size);
+                setSavedStorageProvider(provider);
                 setUploadStatus('success');
                 setRecordingSaved(true);
 
-                // Save persistent recording URL reference in Convex
+                // Save persistent recording URL reference in Convex DB
                 await saveInterviewRecording({
                     recordId: interviewId as any,
-                    recordingUrl: res.recordingUrl,
-                    recordingId: res.recordingId,
-                    fileSize: res.fileSize || videoBlob.size,
+                    recordingUrl: recordingUrl || storageId,
+                    recordingId: storageId,
+                    fileSize: videoBlob.size,
                     durationSeconds: recordingDuration,
-                    storageProvider: res.storageProvider || 'cloud'
+                    storageProvider: provider
                 });
 
                 toast.success("Recording uploaded and permanently saved!");

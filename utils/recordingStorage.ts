@@ -227,13 +227,19 @@ export async function uploadRecordingToCloud(
  * Get video playback URL (<video src="...">).
  */
 export async function getRecordingPlaybackUrl(interviewId: string, fallbackUrl?: string | null): Promise<string | null> {
-    if (fallbackUrl && (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://"))) {
-        return fallbackUrl;
+    // 1. Try retrieving local IndexedDB blob first (instant playback on recording device)
+    try {
+        const blob = await getRecordingBlob(interviewId);
+        if (blob && blob.size > 0) {
+            return URL.createObjectURL(blob);
+        }
+    } catch (e) {
+        console.warn("IndexedDB playback retrieval notice:", e);
     }
 
-    const blob = await getRecordingBlob(interviewId);
-    if (blob && blob.size > 0) {
-        return URL.createObjectURL(blob);
+    // 2. Return persistent Cloud HTTPS URL (Convex Cloud, Supabase, ImageKit)
+    if (fallbackUrl && (fallbackUrl.startsWith("http://") || fallbackUrl.startsWith("https://"))) {
+        return fallbackUrl;
     }
 
     if (fallbackUrl && (fallbackUrl.startsWith("blob:") || fallbackUrl.startsWith("data:"))) {

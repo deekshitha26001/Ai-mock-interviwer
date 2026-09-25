@@ -47,7 +47,23 @@ export const GetInterviewQuestions = query({
             return null;
         }
 
-        return record;
+        // Resolve Convex Cloud Storage HTTPS URL if recordingId exists
+        let resolvedRecordingUrl = record.recordingUrl;
+        if (record.recordingId) {
+            try {
+                const cloudUrl = await ctx.storage.getUrl(record.recordingId as any);
+                if (cloudUrl) {
+                    resolvedRecordingUrl = cloudUrl;
+                }
+            } catch (e) {
+                console.warn("Could not resolve Convex storage URL:", e);
+            }
+        }
+
+        return {
+            ...record,
+            recordingUrl: resolvedRecordingUrl
+        };
     }
 });
 
@@ -209,5 +225,19 @@ export const GenerateUploadUrl = mutation({
     args: {},
     handler: async (ctx) => {
         return await ctx.storage.generateUploadUrl();
+    }
+});
+
+export const GetRecordingUrl = query({
+    args: {
+        storageId: v.string()
+    },
+    handler: async (ctx, args) => {
+        if (!args.storageId) return null;
+        try {
+            return await ctx.storage.getUrl(args.storageId as any);
+        } catch (e) {
+            return null;
+        }
     }
 });
