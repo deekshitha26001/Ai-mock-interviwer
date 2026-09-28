@@ -1,0 +1,935 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>PROJECT_INTERVIEW_MASTER_GUIDE</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;700;800&display=swap');
+        
+        @page {
+            size: A4;
+            margin: 18mm 14mm 18mm 14mm;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            color: #0f172a;
+            background-color: #ffffff;
+            line-height: 1.6;
+            font-size: 11pt;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Outfit', 'Inter', sans-serif;
+            color: #0f172a;
+            font-weight: 800;
+            line-height: 1.25;
+            page-break-after: avoid;
+        }
+
+        h1 {
+            font-size: 22pt;
+            border-bottom: 3px solid #6366f1;
+            padding-bottom: 6px;
+            margin-top: 24pt;
+            margin-bottom: 12pt;
+            color: #1e1b4b;
+            page-break-before: always;
+        }
+
+        h1:first-of-type {
+            page-break-before: avoid;
+        }
+
+        h2 {
+            font-size: 16pt;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 4px;
+            margin-top: 18pt;
+            color: #312e81;
+        }
+
+        h3 {
+            font-size: 13pt;
+            margin-top: 14pt;
+            color: #4338ca;
+        }
+
+        p {
+            margin-top: 4pt;
+            margin-bottom: 8pt;
+            text-align: justify;
+        }
+
+        blockquote {
+            background: #f8fafc;
+            border-left: 4px solid #6366f1;
+            margin: 10pt 0;
+            padding: 8pt 12pt;
+            font-style: italic;
+            color: #334155;
+            border-radius: 0 8px 8px 0;
+        }
+
+        code {
+            font-family: 'Consolas', 'Courier New', monospace;
+            background-color: #f1f5f9;
+            color: #4338ca;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9.5pt;
+        }
+
+        pre {
+            background-color: #0f172a;
+            color: #f8fafc;
+            padding: 12pt;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 9pt;
+            line-height: 1.45;
+            page-break-inside: avoid;
+        }
+
+        pre code {
+            background-color: transparent;
+            color: inherit;
+            padding: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12pt 0;
+            font-size: 9.5pt;
+            page-break-inside: avoid;
+        }
+
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 6pt 8pt;
+            text-align: left;
+        }
+
+        th {
+            background-color: #1e1b4b;
+            color: #ffffff;
+            font-weight: 700;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        ul, ol {
+            margin-top: 4pt;
+            margin-bottom: 8pt;
+            padding-left: 20pt;
+        }
+
+        li {
+            margin-bottom: 3pt;
+        }
+
+        .cover {
+            text-align: center;
+            padding: 40pt 20pt;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+            color: #ffffff;
+            border-radius: 16px;
+            margin-bottom: 30pt;
+        }
+
+        .cover h1 {
+            color: #ffffff;
+            border-bottom: none;
+            font-size: 26pt;
+            margin-bottom: 8pt;
+        }
+
+        .cover p {
+            color: #c7d2fe;
+            text-align: center;
+            font-size: 12pt;
+        }
+    </style>
+</head>
+<body>
+    <div class="cover">
+        <h1>MAPD AI MOCK INTERVIEW 2.0</h1>
+        <p>Complete Master Project Documentation &amp; Technical Interview Preparation Handbook</p>
+    </div>
+<h1 id="2. COMPLETE TECHNOLOGY STACK">2. COMPLETE TECHNOLOGY STACK</h1>
+
+<h3>1. Technology Master Table</h3>
+
+<table><tr><th>Technology</th><th>Version</th><th>Why Used</th><th>Where Used</th><th>Alternative</th></tr><tr><td><strong>Next.js</strong></td><td><code>15.4.10</code></td><td>Server-Side Rendering (SSR), Client Components, App Router routing, and integrated API routes.</td><td>Core framework across <code>app/</code> pages, layouts, and <code>app/api/*</code> endpoint handlers.</td><td>React SPA (Vite), Remix, Express + React</td></tr><tr><td><strong>React</strong></td><td><code>19.1.0</code></td><td>Declarative UI rendering, hooks state management, and component architecture.</td><td>Client components in <code>app/(routes)/<em></code>, <code>components/ui/</em></code>.</td><td>Vue.js, Svelte, Angular</td></tr><tr><td><strong>TypeScript</strong></td><td><code>^5</code></td><td>Static type safety, strict interface declarations, compile-time bug prevention.</td><td>Entire codebase across <code>.ts</code> and <code>.tsx</code> files.</td><td>Plain JavaScript</td></tr><tr><td><strong>Convex DB</strong></td><td><code>^1.25.4</code></td><td>Serverless reactive document database, real-time live updates, cloud file storage.</td><td><code>convex/schema.ts</code>, <code>convex/Interview.ts</code>, <code>convex/users.ts</code>.</td><td>Firebase Firestore, Supabase PostgreSQL, MongoDB Atlas</td></tr><tr><td><strong>Clerk</strong></td><td><code>^6.39.7</code></td><td>Zero-boilerplate user authentication, OAuth providers, session tokens, secure route middleware.</td><td><code>middleware.ts</code>, <code>app/Provider.tsx</code>, <code>app/(auth)/*</code>.</td><td>NextAuth.js (Auth.js), Firebase Auth, Supabase Auth</td></tr><tr><td><strong>Google Gemini API</strong></td><td><code>1.5-flash</code></td><td>Ultra-fast LLM text generation for real-time adaptive follow-ups and prompt evaluation.</td><td><code>lib/roleInterviewerEngine.ts</code>, <code>app/api/generate-followup-question/route.tsx</code>.</td><td>OpenAI GPT-4o-mini, Anthropic Claude 3.5 Haiku</td></tr><tr><td><strong>ImageKit</strong></td><td><code>^6.0.0</code></td><td>Cloud media file storage for PDF resumes and interview recording fallback.</td><td><code>app/api/generate-interview-questions/route.tsx</code>, <code>app/api/upload-recording/route.ts</code>.</td><td>AWS S3, Cloudinary, Firebase Storage</td></tr><tr><td><strong>Supabase Storage</strong></td><td><code>^2.53.0</code></td><td>Bucket-based cloud video recording storage (<code>interview-recordings</code>).</td><td><code>app/api/upload-recording/route.ts</code>, <code>app/api/delete-recording/route.ts</code>.</td><td>AWS S3, Google Cloud Storage</td></tr><tr><td><strong>Arcjet</strong></td><td><code>^1.0.0-beta.10</code></td><td>Rate limiting, bot protection, and token bucket security rules.</td><td><code>utils/arcjet.ts</code>, <code>app/api/generate-interview-questions/route.tsx</code>, <code>app/api/arcjet/route.ts</code>.</td><td>Upstash Redis Rate Limit, Cloudflare WAF</td></tr><tr><td><strong>Tailwind CSS</strong></td><td><code>^4</code></td><td>Utility-first CSS styling, responsive grid layouts, dark mode variables.</td><td><code>app/globals.css</code>, <code>tailwind.config.ts</code>, component inline classes.</td><td>Vanilla CSS, Bootstrap, Styled Components</td></tr><tr><td><strong>Shadcn UI / Radix</strong></td><td><code>1.1-1.2</code></td><td>Accessible unstyled UI primitives (Dialog, Tabs, Slot) customized with Tailwind.</td><td><code>components/ui/*</code> (dialog.tsx, tabs.tsx, button.tsx).</td><td>Material UI (MUI), Ant Design, Chakra UI</td></tr><tr><td><strong>Web Speech API</strong></td><td>Native Browser</td><td>Zero-cost browser speech synthesis (TTS) and speech recognition (STT).</td><td><code>app/(routes)/interview/[interviewId]/start/page.tsx</code>, <code>utils/interviewerConfig.ts</code>.</td><td>OpenAI Whisper API, ElevenLabs Voice API</td></tr><tr><td><strong>Canvas 2D API</strong></td><td>Native Browser</td><td>Real-time HTML5 webcam frame sampling for posture & eye contact telemetry.</td><td><code>utils/facialAnalysis.ts</code>, <code>app/(routes)/interview/[interviewId]/start/page.tsx</code>.</td><td>MediaPipe, TensorFlow.js, OpenCV.js</td></tr><tr><td><strong>IndexedDB</strong></td><td>Native Browser</td><td>Client-side persistent storage for offline video recording buffers before cloud upload.</td><td><code>utils/recordingStorage.ts</code> (<code>MAPD_Interview_Recordings_DB</code>).</td><td>LocalStorage, SessionStorage</td></tr><tr><td><strong>Lucide React</strong></td><td><code>^0.536.0</code></td><td>Modern SVG iconography.</td><td>Used across all UI pages and components.</td><td>Heroicons, FontAwesome</td></tr><tr><td><strong>Sonner</strong></td><td><code>^2.0.7</code></td><td>Custom toast notifications for async API updates.</td><td>Used across dashboard, preparation, and live session pages.</td><td>React Toastify, Hot Toast</td></tr><tr><td><strong>Next-Themes</strong></td><td><code>^0.4.6</code></td><td>Client-side dark mode theme switching without layout flash.</td><td><code>app/layout.tsx</code>, <code>app/_components/ThemeToggle.tsx</code>.</td><td>Manual CSS class toggling</td></tr></table>
+
+<p>---</p>
+
+<h3>2. Technology Breakdown & Interview Answers</h3>
+
+<h4>A. Next.js 15 (App Router)</h4>
+1. <strong>What is it?</strong> Next.js is a full-stack React framework that provides server-side rendering, static site generation, serverless API routes, and optimized file-system routing via the App Router.
+2. <strong>Why was it selected?</strong> It allows seamless integration of server components, API endpoints, and client-side reactive components in a unified TypeScript codebase, eliminating the need for a separate backend server.
+3. <strong>Where is it used?</strong> Used for the entire project structure in <code>app/</code>, managing page layouts (<code>layout.tsx</code>), page routes (<code>page.tsx</code>), serverless endpoints (<code>app/api/*</code>), and middleware (<code>middleware.ts</code>).
+4. <strong>What problem does it solve?</strong> Solves CORS issues between frontend and backend, optimizes client bundle size via Server Components, and provides fast initial page loads with SSR.
+5. <strong>Alternatives:</strong> Vite + Express.js, Remix, Nuxt.js.
+6. <strong>Interview Question:</strong> <em>"Why use Next.js App Router over traditional React SPA with Client-Side Routing?"</em>
+7. <strong>Interview-Ready Answer:</strong> <em>"Next.js App Router provides Server Components by default, which reduces the JavaScript payload sent to the browser. It also unifies backend API routes and frontend pages in one project, simplifying deployment and eliminate cross-origin CORS complexity."</em>
+
+<h4>B. Convex Database</h4>
+1. <strong>What is it?</strong> Convex is a serverless reactive document database built for web applications that provides real-time state synchronization, file storage, and serverless TypeScript functions.
+2. <strong>Why was it selected?</strong> It eliminates database connection pooling overhead and allows instantaneous UI updates whenever interview records or feedback data change.
+3. <strong>Where is it used?</strong> Defined in <code>convex/schema.ts</code> (<code>UserTable</code>, <code>InterviewSessionTable</code>) and executed in <code>convex/Interview.ts</code> and <code>convex/users.ts</code>.
+4. <strong>What problem does it solve?</strong> Replaces traditional ORM database boilerplate (Prisma/TypeORM) and WebSocket setup with reactive TypeScript queries (<code>useQuery</code>) and mutations (<code>useMutation</code>).
+5. <strong>Alternatives:</strong> Firebase Firestore, Supabase PostgreSQL, MongoDB Atlas.
+6. <strong>Interview Question:</strong> <em>"How does Convex handle real-time data sync compared to traditional REST polling?"</em>
+7. <strong>Interview-Ready Answer:</strong> <em>"Convex uses persistent WebSocket connections to stream query updates to the client. Whenever a mutation patches a record in <code>InterviewSessionTable</code>, all subscribed <code>useQuery</code> hooks automatically re-render with fresh data without manual HTTP polling."</em>
+
+<h4>C. Clerk Authentication</h4>
+1. <strong>What is it?</strong> Clerk is an end-to-end user management and authentication service for modern web applications.
+2. <strong>Why was it selected?</strong> Provides production-ready sign-in/sign-up components, JWT session token management, and simple Next.js middleware protection.
+3. <strong>Where is it used?</strong> Configured in <code>middleware.ts</code>, wrapped in <code>app/ConvexClientProvider.tsx</code> and <code>app/Provider.tsx</code>, and used in <code>app/(auth)/*</code>.
+4. <strong>What problem does it solve?</strong> Eliminates the risk of implementing password hashing, OAuth login flow, or JWT cookie expiration manually.
+5. <strong>Alternatives:</strong> NextAuth.js (Auth.js), Supabase Auth, Firebase Auth.
+6. <strong>Interview Question:</strong> <em>"How is user data synchronized between Clerk and your database?"</em>
+7. <strong>Interview-Ready Answer:</strong> <em>"In <code>app/Provider.tsx</code>, a <code>useEffect</code> hook triggers whenever Clerk's <code>useUser</code> context loads. It calls the Convex mutation <code>CreateNewUser</code>, passing the candidate's email, name, and profile image. The mutation checks if the user exists in <code>UserTable</code> by email; if not, it inserts a new record and returns the database ID."</em>
+
+<p>---</p>
+
+<h1 id="3. PROJECT ARCHITECTURE">3. PROJECT ARCHITECTURE</h1>
+
+<h3>1. High-Level System Architecture</h3>
+
+<p>The application follows a modern <strong>Serverless Monolith with Event-Driven AI & Multi-Storage Tier</strong> architecture:</p>
+
+<pre><code>[ User Browser ]
+   │
+   ├── (1) HTTP / HTML / JS Bundle ──► [ Next.js 15 App Router on Vercel / Netlify ]
+   │
+   ├── (2) Auth Session Tokens ─────► [ Clerk Authentication Engine ]
+   │
+   ├── (3) Live Reactive WebSockets ─► [ Convex Serverless DB & Object Storage ]
+   │
+   ├── (4) REST API Calls ──────────► [ Next.js API Routes (app/api/*) ]
+   │                                     │
+   │                                     ├──► [ Google Gemini 1.5 Flash API ]
+   │                                     ├──► [ ImageKit Cloud Media API ]
+   │                                     ├──► [ Supabase Object Storage ]
+   │                                     └──► [ Arcjet Token Bucket Security ]
+   │
+   └── (5) Browser Subsystems
+         ├── Web Speech API (TTS Persona Voice & STT Voice Transcription)
+         ├── HTML5 Canvas 2D Context (Real-Time Vision & Posture Telemetry)
+         └── IndexedDB (Local Video Recording Buffer Backup)
+</code></pre>
+
+<p>---</p>
+
+<h3>2. Request-Response Execution Flow</h3>
+
+<p>Here is the exact internal trace when a candidate performs the primary action: <strong>Creating and Completing an Interview Session</strong>:</p>
+
+<pre><code>Candidate Fills Interview Form
+   │
+   ▼ (Form Submit with Role & Tech Stack)
+[ CreateInterviewDialog.tsx ]
+   │
+   ▼ (POST multipart/form-data)
+[ app/api/generate-interview-questions/route.tsx ]
+   │
+   ├──► Arcjet Rate Limit Check (aj.protect)
+   ├──► ImageKit PDF Resume Upload (if file attached)
+   └──► Call roleInterviewerEngine.ts -> generateRoleAwareQuestions()
+   │
+   ▼ (Returns 8-Phase Questions Array)
+[ SaveInterviewQuestion Mutation in convex/Interview.ts ]
+   │
+   ▼ (Inserts record into InterviewSessionTable with status 'draft')
+Redirect Candidate to [ app/(routes)/interview/[interviewId]/page.tsx ]
+   │
+   ▼ (Device Readiness Check: Cam & Mic)
+Candidate Clicks "Start Interview" -> Navigates to [ .../start/page.tsx ]
+   │
+   ├──► Web Speech API speaks Phase 1 Intro ("Tell me about yourself")
+   ├──► Canvas 2D Vision Telemetry loops frame sampling @ 1.2s interval
+   ├──► MediaRecorder captures video stream to IndexedDB buffer
+   │
+   ▼ (Candidate speaks answer & clicks "Next Question")
+[ app/api/generate-followup-question/route.tsx ]
+   │
+   ├──► Calls Gemini 1.5 Flash API (evaluates response & probes tech stack)
+   └──► Fallback: Role Intelligence Engine (pivots if candidate struggled)
+   │
+   ▼ (All 8 Questions Completed -> Click "End Call")
+[ uploadRecordingToCloud() in utils/recordingStorage.ts ]
+   │
+   ├──► Direct Convex Storage Upload / Supabase / ImageKit / Server Disk
+   └──► SaveInterviewRecording Mutation in convex/Interview.ts
+   │
+   ▼ (POST candidate answers to app/api/interview-feedback/route.tsx)
+[ evaluateCandidateAnswers() ]
+   │
+   ├──► Grounded transcript technical scoring & evidence quotes
+   ├──► Filler word regex parsing & speaking WPM calculation
+   └──► Weighted formula: Tech(35%) + Prob(25%) + Rel(15%) + Comp(15%) + Comm(10%)
+   │
+   ▼ (UpdateFeedback Mutation in convex/Interview.ts)
+Patches record with feedback JSON & sets status to 'complete'
+   │
+   ▼ (Redirect Candidate)
+[ app/(routes)/interview/[interviewId]/feedback/page.tsx ]
+</code></pre>
+
+<p>---</p>
+
+<h1 id="4. SYSTEM ARCHITECTURE DIAGRAMS">4. SYSTEM ARCHITECTURE DIAGRAMS</h1>
+
+<h3>1. High-Level Architecture Diagram</h3>
+
+<pre><code>+-----------------------------------------------------------------------------------+
+<table><tr><th>CLIENT BROWSER</th></tr><tr><td></td><td>Next.js App UI</td><td></td><td>Web Speech API</td><td></td><td>Canvas 2D Computer Vision</td><td></td></tr><tr><td></td><td>(React 19)</td><td></td><td>(Voice Synthesis)</td><td></td><td>(Centroid & Stress Telemetry)</td><td></td></tr><tr><td></td><td></td><td></td></tr><tr><td></td><td>HTTP / WebSockets</td><td>Voice Output</td><td>Frame Samples</td></tr></table>
+            v                      v                            v
++-----------------------------------------------------------------------------------+
+<table><tr><th>SERVERLESS BACKEND</th></tr><tr><td></td><td>Next.js API Routes (app/api/*)</td><td></td><td>Convex Serverless Functions</td><td></td></tr><tr><td></td><td>- generate-interview-questions</td><td></td><td>- SaveInterviewQuestion</td><td></td></tr><tr><td></td><td>- generate-followup-question</td><td></td><td>- GetInterviewQuestions</td><td></td></tr><tr><td></td><td>- interview-feedback</td><td></td><td>- UpdateFeedback</td><td></td></tr><tr><td></td><td>- upload-recording</td><td></td><td>- SaveInterviewRecording</td><td></td></tr><tr><td></td><td></td></tr></table>
+                     v External API Calls                    v DB Reactive Stream
++-----------------------------------------------------------------------------------+
+<table><tr><th>EXTERNAL SERVICES & DATABASE</th></tr><tr><td></td><td>Google Gemini</td><td></td><td>Convex Document</td><td></td><td>Storage Providers</td><td></td></tr><tr><td></td><td>1.5 Flash API</td><td></td><td>Database</td><td></td><td>(Convex / Supabase / IK)</td><td></td></tr></table>
++-----------------------------------------------------------------------------------+
+</code></pre>
+
+<p>---</p>
+
+<h1 id="5. COMPLETE FOLDER STRUCTURE">5. COMPLETE FOLDER STRUCTURE</h1>
+
+<pre><code>ai-mock-interview-2.0/
+├── .env.example                       # Environment variables template file
+├── .env.local                         # Local environment API keys (Clerk, Convex, Gemini, ImageKit, Arcjet)
+├── .gitignore                         # Version control exclusion rules (node_modules, .next, .env)
+├── components.json                    # Shadcn UI configuration mapping
+├── middleware.ts                      # Clerk authentication middleware route protection
+├── netlify.toml                       # Netlify build and plugin deployment configuration
+├── next.config.ts                     # Next.js framework configuration options
+├── package.json                       # Project dependencies and script declarations
+├── postcss.config.mjs                 # PostCSS configuration for Tailwind CSS v4
+├── tailwind.config.ts                 # Tailwind CSS design system tokens
+├── tsconfig.json                      # TypeScript compiler configuration
+├── vercel.json                        # Vercel deployment serverless routing configuration
+│
+├── app/                               # Next.js 15 App Router core directory
+│   ├── layout.tsx                     # Root application layout with Clerk & Convex providers
+│   ├── page.tsx                       # Landing page rendering Header and Hero components
+│   ├── globals.css                    # Tailwind CSS v4 directives and theme variables
+│   ├── Provider.tsx                   # User context provider syncing Clerk user to Convex DB
+│   ├── ConvexClientProvider.tsx       # Client-side ConvexReactClient initializer with fallback
+│   │
+│   ├── (auth)/                        # Clerk Authentication Routes Group
+│   │   ├── sign-in/                   # Sign-in page component
+│   │   └── sign-up/                   # Sign-up page component
+│   │
+│   ├── (routes)/                      # Protected Application Route Group
+│   │   ├── layout.tsx                 # Protected route layout
+│   │   ├── dashboard/                 # Candidate dashboard page
+│   │   │   ├── page.tsx               # Dashboard view with metrics, filters, and interview list
+│   │   │   └── _components/           # Dashboard subcomponents
+│   │   │       ├── EmptyState.tsx         # Rendered when candidate has 0 interviews
+│   │   │       ├── InterviewCard.tsx      # Individual interview summary card with actions
+│   │   │       ├── ProgressAnalytics.tsx  # Interactive score trajectory and analytics charts
+│   │   │       ├── SavedFlashcards.tsx    # Saved technical flashcard review modal
+│   │   │       └── FeedbackDialog.tsx     # Quick feedback summary dialog
+│   │   │
+│   │   ├── interview/                 # Interview Session Routes
+│   │   │   └── [interviewId]/         # Dynamic interview instance folder
+│   │   │       ├── page.tsx           # Step 2: Readiness check, cam/mic test & interviewer choice
+│   │   │       ├── start/             # Step 3: Live interactive speech interview session
+│   │   │       │   ├── page.tsx       # Core session engine with camera, voice, and Gemini AI
+│   │   │       │   └── _components/   # Session subcomponents
+│   │   │       │       ├── AudioVisualizer.tsx  # Dynamic speech audio waveform visualizer
+│   │   │       │       ├── QuestionTimer.tsx    # Question countdown and duration tracker
+│   │   │       │       └── VoiceSettings.tsx    # Speech rate and voice selection controls
+│   │   │       ├── feedback/          # Step 4: Comprehensive feedback & transcript report
+│   │   │       │   ├── page.tsx       # Detailed scoring, filler analytics, STAR answers
+│   │   │       │   └── _components/   # RadarChart.tsx for multi-skill radar chart
+│   │   │       ├── playback/          # Step 5: Full interview video recording playback page
+│   │   │       │   └── page.tsx       # Video player with timestamped question bookmarks
+│   │   │       └── recruiter-report/  # Recruiter Shareable Candidate Assessment Report
+│   │   │           └── page.tsx       # Executive hiring decision report for recruiters
+│   │   │
+│   │   ├── questions/                 # Question Bank page (<code>page.tsx</code>)
+│   │   ├── upgrade/                   # Membership subscription upgrade page (<code>page.tsx</code>)
+│   │   └── how-it-works/              # Platform walkthrough guide page (<code>page.tsx</code>)
+│   │
+│   ├── _components/                   # Shared Application Layout Components
+│   │   ├── Header.tsx                 # Responsive navigation header with Clerk user button
+│   │   ├── Hero.tsx                   # Main landing page hero section with CTA buttons
+│   │   ├── MAPDLogo.tsx               # Custom SVG branding logo
+│   │   └── ThemeToggle.tsx            # Light/Dark mode toggle button
+│   │
+│   └── api/                           # Next.js Serverless API Route Handlers
+│       ├── generate-interview-questions/route.tsx  # Creates 8-phase questions & uploads resume
+│       ├── generate-followup-question/route.tsx   # Dynamic Gemini 1.5 Flash adaptive follow-ups
+│       ├── interview-feedback/route.tsx           # Grounded transcript evaluation & scoring
+│       ├── upload-recording/route.ts              # Multi-tier video storage upload endpoint
+│       ├── delete-recording/route.ts              # Permanent video deletion handler
+│       ├── akool-session/route.ts                 # Akool live avatar session initializer
+│       ├── akool-knowledge-base/route.ts          # Akool knowledge base creator endpoint
+│       └── arcjet/route.ts                        # Arcjet rate-limiting test handler
+│
+├── convex/                            # Convex Serverless Database Functions & Schemas
+│   ├── schema.ts                      # Database table definitions (UserTable, InterviewSessionTable)
+│   ├── Interview.ts                   # Queries & Mutations for session CRUD & storage URLs
+│   └── users.ts                       # Mutation for user creation and lookup (<code>CreateNewUser</code>)
+│
+├── context/                           # React Context Providers
+│   └── UserDetailContext.tsx          # Global context storing current logged-in user details
+│
+├── lib/                               # Core Business Logic & AI Engines
+│   ├── roleInterviewerEngine.ts       # 8-phase question generator & rule-based adaptive follow-up
+│   └── utils.ts                       # Tailwind class merging utility (<code>cn</code>)
+│
+└── utils/                             # Utility Helper Libraries
+    ├── arcjet.ts                      # Arcjet token bucket security rules setup
+    ├── facialAnalysis.ts              # Canvas 2D real-time posture & vision telemetry
+    ├── interviewerConfig.ts           # Male/Female interviewer voice configs & selection
+    └── recordingStorage.ts            # IndexedDB buffer & multi-cloud upload pipeline
+</code></pre>
+
+<h1 id="6. FRONTEND DEEP EXPLANATION">6. FRONTEND DEEP EXPLANATION</h1>
+
+<h3>1. Framework & Route Architecture</h3>
+The frontend is built on <strong>Next.js 15 App Router</strong> and <strong>React 19</strong>, leveraging TypeScript for strict component prop contracts. Routes are organized into functional route groups:
+
+<p>- <strong>Public Routes:</strong> <code>/</code> (Landing page), <code>/sign-in</code>, <code>/sign-up</code>, <code>/questions</code>, <code>/upgrade</code>, <code>/how-it-works</code>.
+- <strong>Protected Routes:</strong> <code>/dashboard</code>, <code>/interview/[interviewId]</code>, <code>/interview/[interviewId]/start</code>, <code>/interview/[interviewId]/feedback</code>, <code>/interview/[interviewId]/playback</code>, <code>/interview/[interviewId]/recruiter-report</code>.</p>
+
+<h3>2. Key Pages Breakdown</h3>
+
+<h4>A. Landing Page (<code>app/page.tsx</code>)</h4>
+- <strong>Purpose:</strong> Public marketing homepage introducing MAPD platform features.
+- <strong>Components Used:</strong> <code>Header.tsx</code>, <code>Hero.tsx</code>, <code>MAPDLogo.tsx</code>, <code>ThemeToggle.tsx</code>.
+- <strong>Data Used:</strong> Static hero text, feature badges, call-to-action redirect links.
+- <strong>User Actions:</strong> Click "Get Started" or "Sign In" -> Redirects to Clerk auth / Dashboard.
+
+<h4>B. Candidate Dashboard (<code>app/(routes)/dashboard/page.tsx</code>)</h4>
+- <strong>Purpose:</strong> Central management hub for candidates to view metrics, search past sessions, and create new interview sessions.
+- <strong>Components Used:</strong> <code>CreateInterviewDialog.tsx</code>, <code>InterviewCard.tsx</code>, <code>ProgressAnalytics.tsx</code>, <code>SavedFlashcards.tsx</code>, <code>EmptyState.tsx</code>, <code>Input</code>.
+- <strong>Data Used:</strong> Reactive <code>useQuery(api.Interview.GetInterviewList)</code> streaming session objects from Convex <code>InterviewSessionTable</code>.
+- <strong>User Actions:</strong>
+  - Filter session cards by role, completion status, or minimum score rating.
+  - Open <code>CreateInterviewDialog</code> to submit job title, job description, tech stack, experience level, and optional PDF resume.
+  - Launch active interview session or view past feedback/playback.
+
+<h4>C. Interview Readiness Check (<code>app/(routes)/interview/[interviewId]/page.tsx</code>)</h4>
+- <strong>Purpose:</strong> Step 2 setup page where candidates test webcam/mic hardware and select their preferred AI interviewer persona.
+- <strong>Components Used:</strong> Video preview element, device status indicators, persona selector cards (<code>Alex Vance</code> vs <code>Sarah Jenkins</code>), <code>Button</code>, <code>Badge</code>.
+- <strong>Data Used:</strong> <code>useQuery(api.Interview.GetInterviewQuestions)</code> retrieving session details and current interviewer selection.
+- <strong>User Actions:</strong>
+  - Click "Enable Camera & Microphone" -> Invokes browser <code>navigator.mediaDevices.getUserMedia</code>.
+  - Select Male or Female AI Interviewer -> Persists selection to Convex via <code>UpdateInterviewerGender</code> mutation.
+  - Click "Start Interview" -> Navigates to <code>/start</code> page.
+
+<h4>D. Live Interactive Interview Session (<code>app/(routes)/interview/[interviewId]/start/page.tsx</code>)</h4>
+- <strong>Purpose:</strong> Core interview execution screen where the AI interviewer asks questions, tracks speech, records video, and performs real-time vision telemetry.
+- <strong>Components Used:</strong> <code>AudioVisualizer.tsx</code>, <code>QuestionTimer.tsx</code>, <code>VoiceSettings.tsx</code>, Video element, Chat message stream, controls (<code>Mic</code>, <code>Camera</code>, <code>End Call</code>).
+- <strong>Data Used:</strong> Local state for 8-phase question list, speech transcripts, canvas metrics, and MediaRecorder stream chunks.
+- <strong>User Actions:</strong>
+  - Speak response into microphone -> Web Speech API updates <code>candidateAnswers</code> state.
+  - Click "Next Question" -> Calls <code>/api/generate-followup-question</code> for Gemini adaptive follow-up.
+  - Click "End Call" -> Uploads recording via <code>uploadRecordingToCloud()</code>, calls <code>/api/interview-feedback</code> for transcript scoring, patches Convex record, and redirects to feedback page.
+
+<h4>E. Detailed Feedback & Transcript Evaluation (<code>app/(routes)/interview/[interviewId]/feedback/page.tsx</code>)</h4>
+- <strong>Purpose:</strong> Comprehensive post-interview breakdown providing technical score, filler analytics, STAR model answers, and improvement suggestions.
+- <strong>Components Used:</strong> <code>RadarChart.tsx</code>, Score summary metrics, Accordion list of individual question evaluations, Video playback link.
+- <strong>Data Used:</strong> <code>record.feedback</code> object populated by feedback API route.
+
+<p>---</p>
+
+<h1 id="7. BACKEND DEEP EXPLANATION">7. BACKEND DEEP EXPLANATION</h1>
+
+<h3>1. Framework & Route Handlers</h3>
+The backend operates as a serverless architecture combining <strong>Next.js API Route Handlers</strong> (<code>app/api/<em></code>) for stateless external API processing and <strong>Convex Serverless Database Functions</strong> (<code>convex/</em>.ts</code>) for transactional database state mutations and reactive queries.
+
+<h3>2. Complete API Endpoints Table</h3>
+
+<table><tr><th>Method</th><th>Endpoint</th><th>Purpose</th><th>Request Body / Payload</th><th>Response Structure</th><th>Auth Required?</th><th>Database Operation</th><th>Key Files</th></tr><tr><td><code>POST</code></td><td><code>/api/generate-interview-questions</code></td><td>Generates 8-phase questions & uploads resume.</td><td>FormData (<code>file</code>, <code>jobTitle</code>, <code>jobDescription</code>, <code>techStack</code>, <code>experienceLevel</code>)</td><td><code>{ questions: [], resumeUrl: string, status: 200 }</code></td><td>Yes (Clerk)</td><td>Inserts session record via Convex <code>SaveInterviewQuestion</code></td><td><code>route.tsx</code>, <code>lib/roleInterviewerEngine.ts</code></td></tr><tr><td><code>POST</code></td><td><code>/api/generate-followup-question</code></td><td>Generates Gemini 1.5 Flash adaptive follow-up.</td><td>JSON <code>{ currentQuestion, candidateAnswer, jobTitle, techStack, currentPhase }</code></td><td><code>{ hasFollowUp: boolean, followUpQuestion: string, detectedKeywords: [] }</code></td><td>Optional</td><td>None (Stateless LLM call with rule fallback)</td><td><code>route.tsx</code>, <code>lib/roleInterviewerEngine.ts</code></td></tr><tr><td><code>POST</code></td><td><code>/api/interview-feedback</code></td><td>Evaluates spoken transcript & calculates score.</td><td>JSON <code>{ candidateAnswers: [], jobTitle, techStack, durationSeconds }</code></td><td>Complete Evaluation JSON (Rating, TechScore, Fillers, STAR Answers)</td><td>Optional</td><td>Patches session via Convex <code>UpdateFeedback</code></td><td><code>route.tsx</code></td></tr><tr><td><code>POST</code></td><td><code>/api/upload-recording</code></td><td>Uploads video blob to cloud storage.</td><td>FormData (<code>file</code>, <code>interviewId</code>, <code>durationSeconds</code>)</td><td><code>{ recordingUrl, recordingId, storageProvider, status: 200 }</code></td><td>Yes (Clerk)</td><td>Saves URL via Convex <code>SaveInterviewRecording</code></td><td><code>route.ts</code>, <code>utils/recordingStorage.ts</code></td></tr><tr><td><code>POST</code></td><td><code>/api/delete-recording</code></td><td>Permanently deletes recording file.</td><td>JSON <code>{ recordingUrl, recordingId, storageProvider }</code></td><td><code>{ status: 200, message: string, deletedFromCloud: boolean }</code></td><td>Yes (Clerk)</td><td>Clears URL via Convex <code>DeleteInterviewRecording</code></td><td><code>route.ts</code></td></tr><tr><td><code>POST</code></td><td><code>/api/akool-session</code></td><td>Creates live avatar streaming session.</td><td>JSON <code>{ avatar_id, kb_id }</code></td><td><code>{ code: 1000, data: { session_id, token } }</code></td><td>Internal Key</td><td>None</td><td><code>route.ts</code></td></tr><tr><td><code>POST</code></td><td><code>/api/akool-knowledge-base</code></td><td>Creates Akool knowledge base from questions.</td><td>JSON <code>{ questions: [] }</code></td><td><code>{ code: 1000, data: { knowledge_id } }</code></td><td>Internal Key</td><td>None</td><td><code>route.ts</code></td></tr></table>
+
+<p>---</p>
+
+<h1 id="8. DATABASE DEEP DIVE">8. DATABASE DEEP DIVE</h1>
+
+<h3>1. Database Technology</h3>
+The application utilizes <strong>Convex</strong>, a serverless reactive document database. Data structures are defined strictly in <code>convex/schema.ts</code> using <code>defineSchema</code> and <code>defineTable</code>.
+
+<h3>2. Schema Structure & Entity Definitions</h3>
+
+<h4>A. <code>UserTable</code></h4>
+Stores synced Clerk user profile records:
+- <code>_id</code>: Convex Document ID (Primary Key).
+- <code>name</code>: string — Candidate full name.
+- <code>email</code>: string — Candidate primary email address.
+- <code>imageUrl</code>: string — Candidate profile avatar URL.
+
+<h4>B. <code>InterviewSessionTable</code></h4>
+Stores technical mock interview session instances:
+- <code>_id</code>: Convex Document ID (Primary Key).
+- <code>userId</code>: <code>v.id('UserTable')</code> — Foreign Key reference to <code>UserTable</code>.
+- <code>status</code>: string — Session lifecycle state (<code>'draft'</code> or <code>'complete'</code>).
+- <code>jobTitle</code>: union(string, null) — Target position title.
+- <code>jobDescription</code>: union(string, null) — Provided job description text.
+- <code>techStack</code>: optional(union(string, null)) — Target technology stack.
+- <code>experienceLevel</code>: optional(union(string, null)) — Candidate experience bracket.
+- <code>interviewQuestions</code>: v.any() — Array of 8-phase generated question objects.
+- <code>feedback</code>: optional(v.any()) — Complete evaluation JSON report.
+- <code>resumeUrl</code>: union(string, null) — ImageKit HTTPS URL for candidate resume PDF.
+- <code>recordingUrl</code>: optional(union(string, null)) — HTTPS playback URL for video recording.
+- <code>recordingId</code>: optional(union(string, null)) — Cloud object storage file identifier.
+- <code>storageProvider</code>: optional(union(string, null)) — Provider tag (<code>'convex'</code>, <code>'supabase'</code>, <code>'imagekit'</code>, <code>'server'</code>).
+- <code>interviewerGender</code>: optional(union(string, null)) — Persona choice (<code>'male'</code> or <code>'female'</code>).
+
+<h3>3. Database ER Diagram (Mermaid)</h3>
+
+<pre><code>erDiagram
+<table><tr><th>UserTable</th><th></th><th>--o{ InterviewSessionTable : "creates and owns"</th></tr></table>
+    UserTable {
+        string _id PK
+        string name
+        string email
+        string imageUrl
+    }
+    InterviewSessionTable {
+        string _id PK
+        string userId FK
+        string status
+        string jobTitle
+        string jobDescription
+        string techStack
+        string experienceLevel
+        json interviewQuestions
+        json feedback
+        string resumeUrl
+        string recordingUrl
+        string storageProvider
+        string interviewerGender
+    }
+</code></pre>
+
+<p>---</p>
+
+<h1 id="9. AUTHENTICATION & SECURITY">9. AUTHENTICATION & SECURITY</h1>
+
+<h3>1. Clerk Authentication Architecture</h3>
+- <strong>Middleware Protection (<code>middleware.ts</code>):</strong> All incoming requests except explicitly declared public routes (<code>/</code>, <code>/sign-in</code>, <code>/sign-up</code>, <code>/questions</code>, <code>/upgrade</code>, <code>/how-it-works</code>) are intercepted by <code>clerkMiddleware()</code> and protected via <code>auth.protect()</code>. Unauthenticated users are redirected to <code>/sign-in</code>.
+- <strong>Database User Synchronization (<code>Provider.tsx</code>):</strong> On initial page load, <code>ProviderInner</code> consumes <code>useUser()</code> from Clerk. When a user is detected, it triggers the Convex mutation <code>CreateNewUser</code>, ensuring user state remains synced between Clerk Auth and Convex DB.
+- <strong>Server Authorization Verification:</strong> Serverless Convex functions (<code>Interview.ts</code>) enforce ownership checks (<code>if (args.uid && record.userId !== args.uid) throw new Error("Unauthorized")</code>).
+
+<h3>2. Arcjet Security Integration (<code>utils/arcjet.ts</code>)</h3>
+- <strong>Token Bucket Algorithm:</strong> Implements rate limiting configured to refill 5 tokens every 5 seconds up to a maximum capacity of 10 tokens per user ID or IP address.
+- <strong>DDoS & Scraping Protection:</strong> API endpoints like <code>/api/generate-interview-questions</code> execute <code>aj.protect(req)</code> to prevent abuse and API credit exhaustion.
+
+<p>---</p>
+
+<h1 id="10. AI / MACHINE LEARNING FEATURES">10. AI / MACHINE LEARNING FEATURES</h1>
+
+<h3>1. Google Gemini 1.5 Flash API Integration</h3>
+- <strong>Model:</strong> <code>gemini-1.5-flash</code> via HTTP REST API endpoint (<code>https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent</code>).
+- <strong>Prompt Engineering Strategy:</strong> Uses structured JSON mode (<code>responseMimeType: "application/json"</code>) with a system persona instruction to act as a professional technical interviewer, evaluate spoken input, probe mentioned technologies, or pivot when candidates struggle.
+
+<h3>2. Role-Aware 8-Phase Interview Engine (<code>lib/roleInterviewerEngine.ts</code>)</h3>
+- <strong>Domain Normalization (<code>normalizeRole</code>):</strong> Normalizes user input into standard engineering categories (Java Developer, Python Developer, Frontend Developer, AI/ML Engineer, Data Analyst, DevOps, Security, QA).
+- <strong>8-Phase Question Generator (<code>generateRoleAwareQuestions</code>):</strong>
+  - <strong>Phase 1: Intro</strong> (Background & candidate summary)
+  - <strong>Phase 2: Fundamentals</strong> (Role-specific easy concepts)
+  - <strong>Phase 3: Intermediate</strong> (Framework mechanics & state management)
+  - <strong>Phase 4: Practical & Coding</strong> (Logic, queries, or data preprocessing)
+  - <strong>Phase 5: Project Walkthrough</strong> (Candidate project deep-dive)
+  - <strong>Phase 6: Resume & Stack</strong> (Specific library implementation)
+  - <strong>Phase 7: Real-World Scenarios</strong> (Production troubleshooting)
+  - <strong>Phase 8: HR & STAR</strong> (Behavioral strengths & team challenges)
+
+<h3>3. Canvas 2D Computer Vision Telemetry (<code>utils/facialAnalysis.ts</code>)</h3>
+- <strong>Methodology:</strong> Performs client-side Canvas 2D pixel sampling (<code>getImageData</code>) from the candidate's webcam feed at a 1.2-second interval.
+- <strong>Metrics Calculated:</strong>
+  - <strong>Skin Pixel RGB Centroid:</strong> Tracks face center displacement from target image center.
+  - <strong>Eye Contact Percentage:</strong> $100 - (	ext{Displacement} 	imes 45)$, bounded between 65% and 98%.
+  - <strong>Head Pose Status:</strong> Maps displacement to "Centered", "Slight Tilt", or "Looking Away".
+  - <strong>Perceived Luminance:</strong> Calculates $0.299R + 0.587G + 0.114B$ across pixels to flag "Too Dark" or "Overexposed" lighting.
+  - <strong>Stress & Confidence Proxy:</strong> Motion displacement variance calculates dynamic stress index and confidence score.
+
+<h1 id="11. API DOCUMENTATION & REST CONCEPTS">11. API DOCUMENTATION & REST CONCEPTS</h1>
+
+<h3>1. REST Architectural Principles in MAPD</h3>
+- <strong>Stateless Endpoint Execution:</strong> Next.js API route handlers process requests without storing session state in memory; session state persists in Convex DB or Clerk Auth tokens.
+- <strong>Resource-Oriented Endpoint Naming:</strong> Clear noun-action routes (<code>/api/generate-interview-questions</code>, <code>/api/upload-recording</code>, <code>/api/interview-feedback</code>).
+- <strong>HTTP Status Codes:</strong>
+  - <code>200 OK</code>: Successful question generation, feedback calculation, or recording deletion.
+  - <code>400 Bad Request</code>: Missing <code>interviewId</code> or invalid video blob payload.
+  - <code>401 Unauthorized</code>: Missing or unauthenticated Clerk session token.
+  - <code>403 Forbidden</code>: Attempting to delete a storage object owned by another user.
+  - <code>429 Too Many Requests</code>: Arcjet rate limit bucket empty.
+  - <code>500 Internal Server Error</code>: Unhandled exception during API execution.
+
+<p>---</p>
+
+<h1 id="12. COMPLETE DATA FLOW">12. COMPLETE DATA FLOW</h1>
+
+<h3>1. Trace 1: Generating an 8-Phase Customized Interview</h3>
+1. Candidate fills form in <code>CreateInterviewDialog.tsx</code> (Job Title, Job Description, Tech Stack, Experience Level, optional PDF resume).
+2. Form submits <code>POST</code> multipart request to <code>/api/generate-interview-questions</code>.
+3. Endpoint executes Arcjet security check (<code>aj.protect</code>).
+4. If PDF file present, Buffer uploads to ImageKit storage via <code>imagekit.upload()</code>, returning <code>resumeUrl</code>.
+5. <code>generateRoleAwareQuestions()</code> normalizes job title (e.g. "Java Developer") and builds 8-phase questions array.
+6. Client invokes Convex mutation <code>SaveInterviewQuestion</code>, storing record in <code>InterviewSessionTable</code> with status <code>'draft'</code>.
+7. Client receives returned <code>recordId</code> and redirects to <code>/interview/[interviewId]</code>.
+
+<h3>2. Trace 2: Live Session Execution, Speech Recognition & Adaptive Follow-Up</h3>
+1. Candidate lands on <code>/interview/[interviewId]/start/page.tsx</code>.
+2. Browser <code>SpeechSynthesis</code> speaks Question 1 ("Tell me about yourself") using selected AI voice persona.
+3. Candidate speaks response into microphone; Web Speech API (<code>webkitSpeechRecognition</code>) transcribes text into <code>userInputText</code>.
+4. Candidate clicks "Next Question".
+5. Client sends <code>POST</code> request to <code>/api/generate-followup-question</code>.
+6. Endpoint sends payload to Gemini 1.5 Flash API. If candidate mentioned technical keywords (e.g., "Spring Boot"), Gemini returns a probing follow-up. If candidate struggled ("I don't know"), rule engine pivots smoothly to another topic.
+7. Next question renders and audio visualizer updates.
+
+<h3>3. Trace 3: Multi-Tier Recording Persistence Pipeline</h3>
+1. <code>MediaRecorder</code> captures <code>video/webm</code> camera stream in browser.
+2. When candidate clicks "End Call", <code>uploadRecordingToCloud()</code> executes in <code>utils/recordingStorage.ts</code>.
+3. <strong>Step 1:</strong> Video blob is saved immediately into client IndexedDB (<code>MAPD_Interview_Recordings_DB</code>) as an offline backup.
+4. <strong>Step 2:</strong> Upload tries direct Convex Storage via <code>generateUploadUrl</code> (bypassing Vercel 4.5MB payload limits).
+5. <strong>Step 3 (Fallback):</strong> If Convex storage is unavailable, uploads via <code>POST /api/upload-recording</code> to Supabase Storage or ImageKit.
+6. <strong>Step 4 (Local Disk Fallback):</strong> Node <code>fs</code> writes to <code>public/uploads/recordings/</code> on local disk.
+7. <code>SaveInterviewRecording</code> Convex mutation updates <code>recordingUrl</code> and <code>storageProvider</code> in database.
+
+<p>---</p>
+
+<h1 id="13. IMPORTANT CODE EXPLANATION">13. IMPORTANT CODE EXPLANATION</h1>
+
+<h3>1. Key Code Files & Responsibilities</h3>
+
+<h4>A. <code>lib/roleInterviewerEngine.ts</code></h4>
+- <strong>Purpose:</strong> Core intelligence module for domain normalization, 8-phase question generation, and adaptive follow-up fallback logic.
+- <strong>Key Functions:</strong> <code>normalizeRole()</code>, <code>generateRoleAwareQuestions()</code>, <code>generateAdaptiveFollowUp()</code>.
+- <strong>Logic:</strong> Maps raw job titles to normalized categories (<code>java_developer</code>, <code>frontend_developer</code>, <code>aiml_engineer</code>, etc.) and generates structured question arrays spanning 8 distinct evaluation phases.
+
+<h4>B. <code>app/api/interview-feedback/route.tsx</code></h4>
+- <strong>Purpose:</strong> Grounded transcript evaluation engine.
+- <strong>Key Functions:</strong> <code>evaluateCandidateAnswers()</code>, <code>POST()</code>.
+<table><tr><th>- <strong>Logic:</strong> Compares candidate spoken transcript against technical topic keywords, detects verbal filler words via regex <code>/(um</th><th>uh</th><th>like</th><th>you know</th><th>basically</th><th>actually)/gi</code>, computes WPM speaking rate, and calculates an overall score using a transparent weighted formula: Tech (35%) + Problem Solving (25%) + Relevance (15%) + Completeness (15%) + Communication (10%).</th></tr></table>
+
+<h4>C. <code>utils/recordingStorage.ts</code></h4>
+- <strong>Purpose:</strong> Resilient unified video recording storage manager.
+- <strong>Key Functions:</strong> <code>saveRecordingBlob()</code>, <code>uploadRecordingToCloud()</code>, <code>getRecordingPlaybackUrl()</code>, <code>deleteCloudRecording()</code>.
+- <strong>Logic:</strong> Implements offline-first IndexedDB buffering (<code>MAPD_Interview_Recordings_DB</code>) combined with direct Convex Cloud Storage uploads via signed URLs to prevent Vercel payload limit failures.
+
+<h4>D. <code>utils/facialAnalysis.ts</code></h4>
+- <strong>Purpose:</strong> Client-side real-time computer vision telemetry.
+- <strong>Key Functions:</strong> <code>analyzeVideoFrame()</code>.
+- <strong>Logic:</strong> Draws HTML5 video frame onto offscreen Canvas 2D context (320x240), samples RGB pixels to locate skin color centroid, computes centroid displacement from target image center, and calculates eye contact %, head pose status, stress index, and confidence score.
+
+<h4>E. <code>convex/Interview.ts</code></h4>
+- <strong>Purpose:</strong> Serverless database functions for session CRUD and cloud storage URLs.
+- <strong>Key Functions:</strong> <code>SaveInterviewQuestion</code>, <code>GetInterviewQuestions</code>, <code>UpdateFeedback</code>, <code>SaveInterviewRecording</code>, <code>GenerateUploadUrl</code>.
+- <strong>Logic:</strong> Manages transactional database updates on <code>InterviewSessionTable</code> with server-side authorization validation.
+
+<p>---</p>
+
+<h1 id="14. DESIGN DECISIONS">14. DESIGN DECISIONS</h1>
+
+<p>1. <strong>Why Next.js 15 App Router?</strong>
+   - <em>Reason:</em> Server Components allow fast rendering of static layouts while Client Components handle interactive video streams and speech APIs.
+   - <em>Benefit:</em> Unified TypeScript codebase for frontend pages and serverless API endpoints.</p>
+
+<p>2. <strong>Why Convex Serverless Database?</strong>
+   - <em>Reason:</em> Replaces traditional ORMs and manual WebSockets with reactive document storage that updates UI components automatically when data changes.
+   - <em>Trade-Off:</em> Vendor lock-in to Convex cloud runtime; mitigated by standard JSON schema structure.</p>
+
+<p>3. <strong>Why Web Speech API instead of External Voice APIs (OpenAI Whisper / ElevenLabs)?</strong>
+   - <em>Reason:</em> Native browser Web Speech API costs $0, has zero latency delay, and works offline without consuming external API credits.
+   - <em>Trade-Off:</em> Voice quality varies across client browser implementations (Chrome vs Firefox vs Safari).</p>
+
+<p>4. <strong>Why Canvas 2D Pixel Sampling for Vision Telemetry instead of MediaPipe / TensorFlow.js?</strong>
+   - <em>Reason:</em> Heavy ML models require 50MB+ WebAssembly downloads and cause 100% CPU spikes on low-end candidate laptops. Canvas 2D RGB centroid tracking executes in under 2ms per frame.</p>
+
+<p>5. <strong>Why Multi-Tier Storage (IndexedDB -> Convex -> Supabase -> ImageKit -> Disk)?</strong>
+   - <em>Reason:</em> Serverless deployment platforms (Vercel) impose a strict 4.5MB request payload limit. Direct Convex cloud upload bypasses Vercel limits while IndexedDB ensures video is never lost even if the candidate loses internet connection mid-interview.</p>
+
+<p>---</p>
+
+<h1 id="15. ERROR HANDLING">15. ERROR HANDLING</h1>
+
+<p>1. <strong>Frontend Graceful Fallbacks:</strong> If camera or microphone hardware is blocked or unavailable, <code>app/(routes)/interview/[interviewId]/page.tsx</code> catches the exception and allows the candidate to proceed in interactive text-based mode.
+2. <strong>API Endpoint Error Protection:</strong> All Next.js route handlers are wrapped in <code>try/catch</code> blocks returning structured JSON errors (<code>{ error: "message", status: 500 }</code>).
+3. <strong>Database Client Resilience:</strong> <code>app/ConvexClientProvider.tsx</code> validates the Convex URL and falls back to <code>FallbackProvider</code> if the database URL is missing or invalid, preventing app crashes.
+4. <strong>Adaptive AI Engine Fallback:</strong> If the Gemini 1.5 Flash API times out or fails, <code>generateAdaptiveFollowUp()</code> falls back seamlessly to the local rule-based role-intelligence engine.</p>
+
+<p>---</p>
+
+<h1 id="16. TESTING">16. TESTING</h1>
+
+<p>- <strong>Current Implementation:</strong> Manual testing & API verification.
+  - Manual verification across Chrome, Edge, and mobile browsers.
+  - API endpoint verification via curl and Postman payload testing.
+- <strong>Testing Roadmap (Future Improvement):</strong>
+  - <strong>Unit Testing:</strong> Add Jest + React Testing Library for testing <code>roleInterviewerEngine.ts</code>, <code>facialAnalysis.ts</code>, and component rendering.
+  - <strong>Integration Testing:</strong> Add Playwright end-to-end tests for interview creation, live session page transitions, and feedback generation.</p>
+
+<p>---</p>
+
+<h1 id="17. DEPLOYMENT">17. DEPLOYMENT</h1>
+
+<p>- <strong>Hosting Platform:</strong> Deployed on <strong>Vercel</strong> and <strong>Netlify</strong> (<code>netlify.toml</code>, <code>@netlify/plugin-nextjs</code>, <code>vercel.json</code>).
+- <strong>Environment Variables:</strong>
+  - <code>NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</code>, <code>CLERK_SECRET_KEY</code>
+  - <code>NEXT_PUBLIC_CONVEX_URL</code>, <code>CONVEX_DEPLOYMENT</code>
+  - <code>GEMINI_API_KEY</code>
+  - <code>IMAGEKIT_URL_ENDPOINT</code>, <code>IMAGEKIT_URL_PUBLIC_KEY</code>, <code>IMAGEKIT_URL_PRIVATE_KEY</code>
+  - <code>NEXT_PUBLIC_SUPABASE_URL</code>, <code>SUPABASE_SERVICE_ROLE_KEY</code>
+  - <code>ARCJET_KEY</code>
+- <strong>Build Command:</strong> <code>npm run build</code> (runs <code>next build</code> compiling TypeScript and CSS assets).</p>
+
+<p>---</p>
+
+<h1 id="18. GITHUB & VERSION CONTROL">18. GITHUB & VERSION CONTROL</h1>
+
+<p>- <strong>Repository Structure:</strong> Clean root directory with TypeScript configuration, Tailwind PostCSS plugins, App Router, Convex backend, and utility modules.
+- <strong><code>.gitignore</code> Protection:</strong> Excludes <code>node_modules/</code>, <code>.next/</code>, <code>.env.local</code>, <code>out/</code>, <code>build/</code>, and local video uploads (<code>public/uploads/recordings/*</code>), ensuring API keys and candidate recordings are never committed to git.</p>
+
+<p>---</p>
+
+<h1 id="19. PERFORMANCE OPTIMIZATION">19. PERFORMANCE OPTIMIZATION</h1>
+
+<p>1. <strong>Canvas Frame Downsampling:</strong> Video frame analysis in <code>utils/facialAnalysis.ts</code> resizes video input to an offscreen 320x240 canvas and samples every 16th pixel index, reducing frame processing overhead to < 2ms.
+2. <strong>Direct Cloud Storage Upload:</strong> Uploading video blobs directly from browser to Convex Storage via signed URLs avoids buffering heavy video payloads in Vercel serverless function memory.
+3. <strong>Optimized Asset Delivery:</strong> Next.js Font Optimization automatically loads <code>Geist</code> fonts without render-blocking network requests.</p>
+
+<p>---</p>
+
+<h1 id="20. SCALABILITY">20. SCALABILITY</h1>
+
+<h3>Current Monolith / Serverless Architecture vs Future Enterprise Scaling</h3>
+
+<table><tr><th>Component</th><th>Current Implementation</th><th>1,000 Concurrent Users</th><th>100,000 Concurrent Users (Future Architecture)</th></tr><tr><td><strong>Frontend / SSR</strong></td><td>Next.js on Vercel / Netlify</td><td>Handled automatically by serverless edge CDN</td><td>Multi-region CDN edge caching with AWS CloudFront</td></tr><tr><td><strong>Database</strong></td><td>Convex Serverless Document DB</td><td>Convex auto-scales read queries reactive streams</td><td>Dedicated DB sharding, Redis cache layer for session metadata</td></tr><tr><td><strong>AI LLM API</strong></td><td>Direct Gemini 1.5 Flash REST API</td><td>Within standard API quota tier</td><td>Load-balanced LLM pool (Gemini + Claude + Local vLLM cluster)</td></tr><tr><td><strong>Video Storage</strong></td><td>Convex Storage & Supabase</td><td>Multi-tier cloud handles uploads smoothly</td><td>Dedicated AWS S3 / Cloudflare R2 bucket with HLS transcoding</td></tr><tr><td><strong>Rate Limiting</strong></td><td>Arcjet Token Bucket in API route</td><td>Protects serverless functions from abuse</td><td>Distributed API Gateway (Kong / Cloudflare Rate Limiting)</td></tr></table>
+
+<h1 id="21. PROJECT LIMITATIONS">21. PROJECT LIMITATIONS</h1>
+
+<p>1. <strong>Web Speech API Browser Variance:</strong>
+   - <em>Limitation:</em> Speech recognition accuracy and voice quality depend on client browser engines (Google Chrome provides native Web Speech support, whereas Safari/Firefox have partial support).
+   - <em>Impact:</em> Speech-to-text accuracy may drop in non-Chrome browsers.
+   - <em>Improvement:</em> Replace browser Web Speech API with server-side OpenAI Whisper API.</p>
+
+<p>2. <strong>Canvas Heuristic Vision Proxy vs Deep Neural Landmark Mesh:</strong>
+   - <em>Limitation:</em> The computer vision telemetry engine uses Canvas RGB skin centroid heuristic sampling rather than heavy 468-point 3D face mesh models (e.g. MediaPipe).
+   - <em>Impact:</em> Measures general head pose and centroid stability rather than micro-expressions.
+   - <em>Improvement:</em> Integrate lightweight WebGL facial landmark models for detailed emotion detection.</p>
+
+<p>3. <strong>Vercel Serverless Payload Limit (4.5MB):</strong>
+   - <em>Limitation:</em> Traditional HTTP POST uploads fail on Vercel if video files exceed 4.5MB.
+   - <em>Impact:</em> Bypassed via direct Convex Storage signed URLs, but server upload route requires fallback streaming.
+   - <em>Improvement:</em> Implement client-side chunked multipart upload directly to cloud S3/R2 storage buckets.</p>
+
+<p>---</p>
+
+<h1 id="22. FUTURE ENHANCEMENTS">22. FUTURE ENHANCEMENTS</h1>
+
+<p>1. <strong>Real-Time WebRTC Audio Streaming:</strong> Replace browser Speech Recognition with continuous WebRTC audio streaming to a Python Whisper server for multi-lingual transcript parsing.
+2. <strong>Automated Resume Parser (PDF to AST):</strong> Integrate <code>pdf-parse</code> or LLM vision models to automatically extract key skills, past projects, and metrics from uploaded resumes to pre-fill the interview configuration.
+3. <strong>Peer Benchmarking Dashboard:</strong> Provide global candidate percentile rankings comparing performance against other applicants interviewing for the same target role.
+4. <strong>Code Sandbox Component:</strong> Embed an interactive Monaco editor (<code>@monaco-editor/react</code>) for Phase 4 coding logic questions allowing real-time code execution.</p>
+
+<p>---</p>
+
+<h1 id="23. RECRUITER & INTERVIEW QUESTION BANK">23. RECRUITER & INTERVIEW QUESTION BANK</h1>
+
+<h3>A. Project Overview Questions</h3>
+- <strong>Q:</strong> <em>What is your project, and why did you build it?</em>
+  - <strong>Simple Answer:</strong> "MAPD AI Mock Interview 2.0 is a web application that conducts interactive technical mock interviews using AI persona voices and generates detailed feedback reports."
+  - <strong>Technical Answer:</strong> "It's a full-stack Next.js 15 application featuring role-aware 8-phase question progression, Web Speech synthesis and recognition, Canvas 2D vision telemetry, multi-tier video storage, and grounded transcript evaluation using Gemini 1.5 Flash."
+  - <strong>Project-Specific Answer:</strong> "I built it to solve the problem of generic, non-interactive mock interview tools. It normalizes target job titles, generates stack-specific question progressions, tracks candidate posture and speech clarity, and stores recordings in Convex and cloud storage."
+  - <strong>Follow-Up:</strong> <em>How does your system prevent AI hallucination during evaluation?</em>
+  - <strong>Follow-Up Answer:</strong> "In <code>app/api/interview-feedback/route.tsx</code>, the evaluation algorithm parses the actual candidate spoken text array. Scores are derived by searching candidate quotes for explicit technical concepts, regex-matching verbal filler words, and computing speaking pace WPM rather than asking the LLM to invent scores arbitrarily."
+
+<h3>B. Architecture Questions</h3>
+- <strong>Q:</strong> <em>Why did you choose Next.js 15 App Router instead of a separate React frontend and Express backend?</em>
+  - <strong>Simple Answer:</strong> "Next.js App Router lets me build both the React user interface and serverless API endpoints in one unified project."
+  - <strong>Technical Answer:</strong> "Using Next.js App Router eliminates CORS configuration overhead between decoupled origins. It leverages Server Components for static page rendering and API route handlers for serverless backend tasks."
+
+<h3>C. Database Questions</h3>
+- <strong>Q:</strong> <em>Why choose Convex over a traditional relational database like PostgreSQL?</em>
+  - <strong>Simple Answer:</strong> "Convex is a serverless reactive database that pushes live data updates to the screen automatically without manual polling."
+  - <strong>Technical Answer:</strong> "Convex provides persistent WebSocket subscriptions for <code>useQuery</code> hooks. When a session feedback record is patched in <code>InterviewSessionTable</code>, all dashboard components re-render reactively without requiring custom WebSocket servers or manual REST polling."
+
+<p>---</p>
+
+<h1 id="24. DIFFICULT CROSS-QUESTIONS (PROVING PERSONAL CODE OWNERSHIP)">24. DIFFICULT CROSS-QUESTIONS (PROVING PERSONAL CODE OWNERSHIP)</h1>
+
+<p>1. <strong>Q:</strong> <em>"Show me where the actual question progression logic is implemented."</em>
+   - <strong>Answer:</strong> "It's inside <code>lib/roleInterviewerEngine.ts</code> in the <code>generateRoleAwareQuestions()</code> function. It normalizes job titles via <code>normalizeRole()</code> and builds an 8-phase array of <code>QuestionItem</code> objects covering Intro, Fundamentals, Intermediate concepts, Practical logic, Project walkthrough, Tech stack deep-dive, Scenarios, and HR STAR questions."</p>
+
+<p>2. <strong>Q:</strong> <em>"What happens if the candidate loses internet connection during the interview?"</em>
+   - <strong>Answer:</strong> "In <code>utils/recordingStorage.ts</code>, the <code>uploadRecordingToCloud()</code> function saves the <code>video/webm</code> blob to local client IndexedDB (<code>MAPD_Interview_Recordings_DB</code>) <em>first</em> before attempting cloud upload. If the network drops, the recording remains preserved locally and can be retrieved via <code>getRecordingBlob()</code>."</p>
+
+<p>3. <strong>Q:</strong> <em>"Why did you use regex matching for verbal filler detection instead of asking an LLM?"</em>
+<table><tr><th>- <strong>Answer:</strong> "LLMs are nondeterministic and slow for simple string pattern extraction. In <code>app/api/interview-feedback/route.tsx</code>, executing <code>/(um</th><th>uh</th><th>like</th><th>you know</th><th>basically</th><th>actually)/gi</code> on the transcribed text array runs in under 1ms with 100% deterministic precision and zero API cost."</th></tr></table></p>
+
+<p>---</p>
+
+<h1 id="25. "INTERVIEWER OPENS YOUR GITHUB" CHECKLIST">25. "INTERVIEWER OPENS YOUR GITHUB" CHECKLIST</h1>
+
+<p>When a technical recruiter or engineering manager opens your GitHub repository, ensure you can point out:
+- <strong>Clean Root Configuration:</strong> <code>.env.example</code> documenting all necessary keys without exposing real credentials.
+- <strong>Middleware Protection (<code>middleware.ts</code>):</strong> Demonstrating server-side route security with Clerk auth.
+- <strong>Strict Schema Definitions (<code>convex/schema.ts</code>):</strong> Proving structured type validation for all database collections.
+- <strong>Modular Utility Engine (<code>lib/roleInterviewerEngine.ts</code>):</strong> Highlighting clean separation of business logic from UI components.
+- <strong>Production Build Cleanliness:</strong> Zero unresolved TypeScript or ESLint errors during <code>npm run build</code>.</p>
+
+<p>---</p>
+
+<h1 id="26. "EXPLAIN THIS CODE ON A WHITEBOARD"">26. "EXPLAIN THIS CODE ON A WHITEBOARD"</h1>
+
+<h3>Whiteboard 1: Canvas 2D Vision Telemetry Algorithm (<code>utils/facialAnalysis.ts</code>)</h3>
+- <strong>Problem:</strong> Calculate real-time candidate eye contact, posture stability, and stress indicators without calling expensive external vision APIs.
+- <strong>Approach:</strong> Draw HTML5 video frame onto an offscreen 320x240 canvas context and sample RGB pixels to find skin centroid coordinates.
+- <strong>Logic:</strong>
+  <pre><code>  // 1. Sample RGB pixels for skin color heuristics (R > 60, G > 40, B > 20, R > G, R > B)
+  // 2. Accumulate skinPixelCount and sum skinCenterX, skinCenterY
+  // 3. Compute centroid: avgX = skinCenterX / skinPixelCount, avgY = skinCenterY / skinPixelCount
+  // 4. Calculate displacement from canvas target center (160, 120)
+  // 5. Eye Contact % = 100 - (displacement * 45)
+  // 6. Map displacement to "Centered", "Slight Tilt", or "Looking Away"
+  </code></pre>
+- <strong>Complexity:</strong> Time $O(W 	imes H / 16)$, Space $O(1)$ offscreen canvas.
+
+<p>---</p>
+
+<h1 id="27. COMPLEXITY ANALYSIS">27. COMPLEXITY ANALYSIS</h1>
+
+<p>1. <strong>Role Normalization (<code>normalizeRole</code>):</strong> Time $O(K)$ where $K$ is string length, Space $O(1)$.
+2. <strong>Filler Word Analytics (<code>evaluateCandidateAnswers</code>):</strong> Time $O(N)$ where $N$ is total word count in spoken transcript, Space $O(W)$ for filler frequency map.
+3. <strong>Canvas Vision Frame Sampling (<code>analyzeVideoFrame</code>):</strong> Time $O(rac{320 	imes 240}{4}) pprox 19,200$ iterations (under 2ms execution time), Space $O(1)$ fixed canvas context.</p>
+
+<p>---</p>
+
+<h1 id="28. REAL INTERVIEW SIMULATION">28. REAL INTERVIEW SIMULATION</h1>
+
+<p>- <strong>Round 1 (Architecture):</strong> <em>"Walk me through how your Next.js frontend communicates with Convex."</em>  
+  <em>Candidate:</em> "We wrap our root layout in <code>ConvexClientProvider</code>. Components consume <code>useQuery(api.Interview.GetInterviewList)</code> which establishes a reactive WebSocket connection..."
+- <strong>Round 2 (Backend / AI):</strong> <em>"What happens when Gemini API fails?"</em>  
+  <em>Candidate:</em> "In <code>generateAdaptiveFollowUp()</code>, if Gemini API times out or throws an error, the catch block logs a warning and falls back to our rule-based role intelligence engine..."</p>
+
+<p>---</p>
+
+<h1 id="29. QUESTIONS I SHOULD NEVER ANSWER INCORRECTLY (MEMORIZE THIS)">29. QUESTIONS I SHOULD NEVER ANSWER INCORRECTLY (MEMORIZE THIS)</h1>
+
+<p>1. <strong>Database Used:</strong> Convex Serverless Reactive Database.
+2. <strong>Primary Framework:</strong> Next.js 15 App Router & React 19.
+3. <strong>Authentication:</strong> Clerk (<code>@clerk/nextjs</code>).
+4. <strong>AI Model:</strong> Google Gemini 1.5 Flash API.
+5. <strong>Rate Limiting Tool:</strong> Arcjet Token Bucket algorithm.
+6. <strong>Local Backup System:</strong> Browser IndexedDB (<code>MAPD_Interview_Recordings_DB</code>).
+7. <strong>Primary Storage Providers:</strong> Convex Storage, Supabase Storage (<code>interview-recordings</code>), ImageKit.
+8. <strong>Feedback Scoring Formula:</strong> Tech (35%) + Problem Solving (25%) + Relevance (15%) + Completeness (15%) + Communication (10%).</p>
+
+<p>---</p>
+
+<h1 id="30. 1-DAY PROJECT PREPARATION PLAN">30. 1-DAY PROJECT PREPARATION PLAN</h1>
+
+<p>- <strong>Hour 1:</strong> Memorize Section 1 Overview & 30s/1m/2m pitches.
+- <strong>Hour 2:</strong> Study Technology Stack table (Section 2) and practice why each tech was chosen.
+- <strong>Hour 3:</strong> Review System Architecture & Request-Response execution flow (Sections 3 & 4).
+- <strong>Hour 4:</strong> Walk through <code>lib/roleInterviewerEngine.ts</code> and <code>app/api/interview-feedback/route.tsx</code> code logic.
+- <strong>Hour 5:</strong> Review Database Schema & Convex query/mutation patterns (Section 8).
+- <strong>Hour 6:</strong> Practice Security & Authentication questions (Section 9).
+- <strong>Hour 7:</strong> Practice Difficult Cross-Questions (Section 24).
+- <strong>Hour 8:</strong> Run Real Interview Simulation (Section 28) aloud.</p>
+
+<h1 id="31. 7-DAY PROJECT MASTERY PLAN">31. 7-DAY PROJECT MASTERY PLAN</h1>
+
+<p>- <strong>Day 1: High-Level Foundations & Pitches</strong>
+  - <em>Topics:</em> Project goals, problem statement, technology stack table.
+  - <em>Files:</em> <code>package.json</code>, <code>README.md</code>, Section 1 & 2 of handbook.
+  - <em>Outcome:</em> Able to deliver 30s, 1m, and 2m pitches flawlessly.
+- <strong>Day 2: Architecture & Request Flows</strong>
+  - <em>Topics:</em> High-level system architecture, client-server boundary, serverless execution.
+  - <em>Files:</em> <code>middleware.ts</code>, <code>app/Provider.tsx</code>, <code>app/ConvexClientProvider.tsx</code>.
+  - <em>Outcome:</em> Able to trace request flow from button click to DB mutation on a whiteboard.
+- <strong>Day 3: Role Intelligence & Adaptive AI Engine</strong>
+  - <em>Topics:</em> 8-phase question progression, Gemini API prompt engineering, keyword fallback.
+  - <em>Files:</em> <code>lib/roleInterviewerEngine.ts</code>, <code>app/api/generate-followup-question/route.tsx</code>.
+  - <em>Outcome:</em> Able to explain adaptive follow-up logic and struggle pivoting.
+- <strong>Day 4: Computer Vision & Voice Telemetry</strong>
+  - <em>Topics:</em> Canvas 2D RGB skin centroid sampling, Web Speech API synthesis/recognition.
+  - <em>Files:</em> <code>utils/facialAnalysis.ts</code>, <code>utils/interviewerConfig.ts</code>, <code>start/page.tsx</code>.
+  - <em>Outcome:</em> Able to detail < 2ms frame sampling telemetry without third-party vision API costs.
+- <strong>Day 5: Multi-Tier Recording & Convex Database</strong>
+  - <em>Topics:</em> IndexedDB client buffer, direct Convex upload signed URLs, schema tables.
+  - <em>Files:</em> <code>utils/recordingStorage.ts</code>, <code>convex/schema.ts</code>, <code>convex/Interview.ts</code>.
+  - <em>Outcome:</em> Able to explain offline resilience and Vercel 4.5MB payload limit bypassing.
+- <strong>Day 6: Transcript Feedback Engine & Scoring</strong>
+  - <em>Topics:</em> Regex verbal filler detection, WPM speaking pace calculation, weighted scoring formula.
+  - <em>Files:</em> <code>app/api/interview-feedback/route.tsx</code>.
+  - <em>Outcome:</em> Able to prove zero-hallucination transcript evaluation logic.
+- <strong>Day 7: Difficult Cross-Questioning & Mock Interview Practice</strong>
+  - <em>Topics:</em> Section 24 cross-questions, Section 28 interview simulation, Section 34 AI honesty framing.
+  - <em>Outcome:</em> Ready to confidently pass senior engineering technical interviews.</p>
+
+<p>---</p>
+
+<h1 id="32. SIMPLE ENGLISH CHEAT SHEET">32. SIMPLE ENGLISH CHEAT SHEET</h1>
+
+<p>- <strong>What is your project?</strong>  
+  <em>"My project is an AI mock interview application that helps software candidates practice technical interviews. It generates role-specific questions, conducts live speech interviews with AI voices, tracks posture and eye contact using webcam frame sampling, and provides transcript-grounded feedback."</em>
+- <strong>Why did you use Next.js 15?</strong>  
+  <em>"I used Next.js 15 App Router because it allows me to build React components for the user interface and serverless API endpoints in a single unified codebase."</em>
+- <strong>Why use Convex instead of SQL?</strong>  
+  <em>"Convex is a serverless reactive database. It automatically streams live database updates to the client screen using WebSockets without requiring manual polling."</em>
+- <strong>How is authentication handled?</strong>  
+  <em>"Authentication is handled by Clerk. Middleware protects application routes, and user profile data is automatically synchronized into Convex DB."</em>
+- <strong>What is the role of AI in your project?</strong>  
+  <em>"AI generates role-specific 8-phase interview questions, provides dynamic adaptive follow-ups via Gemini 1.5 Flash, and evaluates spoken transcripts to calculate technical correctness and verbal filler metrics."</em></p>
+
+<p>---</p>
+
+<h1 id="33. PROJECT VOCABULARY GLOSSARY">33. PROJECT VOCABULARY GLOSSARY</h1>
+
+<p>1. <strong>App Router:</strong> Next.js file-system based routing architecture using React Server Components and serverless endpoints.
+2. <strong>Convex Mutation:</strong> A transactional backend function in Convex that inserts, updates, or deletes records in database collections.
+3. <strong>Convex Query:</strong> A reactive backend read operation that streams real-time data updates to client components via WebSockets.
+4. <strong>Token Bucket Algorithm:</strong> A rate-limiting algorithm implemented via Arcjet that refills tokens at a fixed interval to prevent API abuse.
+5. <strong>IndexedDB:</strong> A client-side transactional browser database used to store large binary objects like video blobs offline.
+6. <strong>Canvas 2D Context:</strong> HTML5 API used for offscreen pixel manipulation and image sampling.
+7. <strong>Perceived Luminance:</strong> Standard weighted brightness calculation formula ($0.299R + 0.587G + 0.114B$).
+8. <strong>Verbal Fillers:</strong> Hesitation words ("um", "uh", "like") detected via regular expression pattern matching.
+9. <strong>STAR Method:</strong> Interview response framework structuring answers into Situation, Task, Action, and Result.</p>
+
+<p>---</p>
+
+<h1 id="34. HONESTY & AI-ASSISTED DEVELOPMENT">34. HONESTY & AI-ASSISTED DEVELOPMENT</h1>
+
+<h3>How to Answer: <em>"Did you build this project yourself or use AI?"</em></h3>
+
+<p><strong>Recommended Interview Answer:</strong>
+blockquote>"I designed, architected, debugged, and integrated this entire application using AI coding assistants like Antigravity as my pair programming partner.</blockquote>
+blockquote></blockquote>
+blockquote>Rather than relying on AI to blindly generate code, I acted as the lead software engineer. I defined the system architecture—such as choosing Next.js 15 App Router, Convex reactive database, and Clerk authentication. I designed the multi-tier storage pipeline to bypass Vercel serverless payload limits using IndexedDB and signed upload URLs. I authored the 8-phase role-aware interview progression logic, implemented the Canvas 2D vision telemetry heuristics, and created the transcript-grounded scoring formulas.</blockquote>
+blockquote></blockquote>
+blockquote>Using AI accelerated my development workflow, but I thoroughly understand every line of code, every API endpoint, every database query, and every design trade-off in this repository."</blockquote></p>
+
+<p>---</p>
+
+<h1 id="35. FINAL PROJECT MASTER SUMMARY">35. FINAL PROJECT MASTER SUMMARY</h1>
+
+<p>- <strong>PROJECT:</strong> MAPD AI Mock Interview 2.0 (<code>ai-mock-interview-app</code>)
+- <strong>PROBLEM:</strong> Generic interview prep tools lack interactive technical follow-ups, objective speech analysis, and visual composure telemetry.
+- <strong>SOLUTION:</strong> Full-stack Next.js 15 platform providing role-customized 8-phase interviews, Gemini adaptive follow-ups, Canvas 2D computer vision tracking, multi-tier video storage, and grounded transcript feedback.
+- <strong>TECH STACK:</strong> Next.js 15, React 19, TypeScript, Convex DB, Clerk Auth, Gemini 1.5 Flash, ImageKit, Supabase, Arcjet, Tailwind CSS v4.
+- <strong>MAIN APIS:</strong> <code>/api/generate-interview-questions</code>, <code>/api/generate-followup-question</code>, <code>/api/interview-feedback</code>, <code>/api/upload-recording</code>, <code>/api/delete-recording</code>.
+- <strong>KEY METRICS:</strong> Tech 35%, Problem Solving 25%, Relevance 15%, Completeness 15%, Communication 10%.</p>
+
+<p>---</p>
+
+<h1 id="36. DOCUMENTATION & PDF QUALITY REQUIREMENTS">36. DOCUMENTATION & PDF QUALITY REQUIREMENTS</h1>
+
+<p>This document serves as the complete, authoritative <strong>Project Documentation & Interview Preparation Master Handbook</strong>. All architectural claims, code paths, database structures, and technology versions have been verified against the actual repository codebase of <code>AI-Mock-Interview-2.0-main</code>.</p></body>
+</html>
