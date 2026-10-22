@@ -211,6 +211,7 @@ function CreateInterviewDialog() {
                                     Job Role / Position <span className="text-rose-500">*</span>
                                 </label>
                                 <Input
+                                    id="jobTitleInput"
                                     placeholder="e.g. Senior Java Developer / Full Stack Engineer"
                                     value={jobTitle}
                                     onChange={(e) => setJobTitle(e.target.value)}
@@ -227,6 +228,7 @@ function CreateInterviewDialog() {
                                         Tech Stack / Core Tools
                                     </label>
                                     <Input
+                                        id="techStackInput"
                                         placeholder="e.g. Java, Spring Boot, SQL, REST APIs"
                                         value={techStack}
                                         onChange={(e) => setTechStack(e.target.value)}
@@ -240,6 +242,7 @@ function CreateInterviewDialog() {
                                         Years of Experience <span className="text-rose-500">*</span>
                                     </label>
                                     <select
+                                        id="experienceLevelSelect"
                                         value={experienceLevel}
                                         onChange={(e) => setExperienceLevel(e.target.value)}
                                         className="w-full text-sm rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
@@ -264,6 +267,7 @@ function CreateInterviewDialog() {
                                 <div className="grid grid-cols-2 gap-3">
                                     {/* Male Card */}
                                     <div
+                                        id="maleInterviewerCard"
                                         onClick={() => setInterviewerGender('male')}
                                         className={`cursor-pointer rounded-xl p-3 border-2 transition-all flex items-center gap-3 ${
                                             interviewerGender === 'male'
@@ -293,6 +297,7 @@ function CreateInterviewDialog() {
 
                                     {/* Female Card */}
                                     <div
+                                        id="femaleInterviewerCard"
                                         onClick={() => setInterviewerGender('female')}
                                         className={`cursor-pointer rounded-xl p-3 border-2 transition-all flex items-center gap-3 ${
                                             interviewerGender === 'female'
@@ -329,6 +334,7 @@ function CreateInterviewDialog() {
                                     Job Description / Key Requirements <span className="text-rose-500">*</span>
                                 </label>
                                 <Textarea
+                                    id="jobDescriptionInput"
                                     placeholder="Paste job responsibilities, required skills, framework expectations..."
                                     value={jobDescription}
                                     onChange={(e) => setJobDescription(e.target.value)}
@@ -339,7 +345,7 @@ function CreateInterviewDialog() {
                             </div>
 
                             {/* Optional Resume Upload */}
-                            <div className="space-y-1.5">
+                            <div className="space-y-1.5" id="resumeUploadSection">
                                 <label className="text-xs font-semibold text-slate-700 dark:text-slate-300 flex items-center justify-between">
                                     <span className="flex items-center gap-1.5">
                                         <UploadCloud className="w-3.5 h-3.5 text-indigo-500" />
@@ -349,14 +355,14 @@ function CreateInterviewDialog() {
                                 </label>
 
                                 {!file ? (
-                                    <label className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-600 transition bg-slate-50/50 dark:bg-slate-900/50">
+                                    <label id="resumeUploadDropzone" className="border-2 border-dashed border-slate-200 dark:border-slate-800 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-600 transition bg-slate-50/50 dark:bg-slate-900/50">
                                         <UploadCloud className="w-7 h-7 text-indigo-500 mb-1" />
                                         <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Click to upload your resume PDF</span>
                                         <span className="text-[10px] text-slate-400 mt-0.5">MAPD AI will extract projects & skills</span>
-                                        <input type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+                                        <input id="resumeFileInput" type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
                                     </label>
                                 ) : (
-                                    <div className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60">
+                                    <div id="resumeUploadedCard" className="flex items-center justify-between p-3 rounded-xl bg-indigo-50/70 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-800/60">
                                         <div className="flex items-center gap-2.5 overflow-hidden">
                                             <FileText className="w-5 h-5 text-indigo-600 dark:text-indigo-400 shrink-0" />
                                             <div className="truncate">
@@ -376,7 +382,7 @@ function CreateInterviewDialog() {
                                 <Button type="button" variant="ghost" onClick={() => setOpen(false)} className="rounded-full text-xs">
                                     Cancel
                                 </Button>
-                                <Button type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-md px-6 text-xs cursor-pointer">
+                                <Button id="generateInterviewSubmitBtn" type="submit" className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-full shadow-md px-6 text-xs cursor-pointer">
                                     Generate Interview
                                 </Button>
                             </div>

@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Mock Interview 2.0 - Technical Verification & Architectural Audit Report</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        @page {
+            size: A4;
+            margin: 20mm 15mm 20mm 15mm;
+            @bottom-right {
+                content: counter(page);
+                font-family: 'Inter', sans-serif;
+                font-size: 9pt;
+                color: #64748b;
+            }
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-size: 10pt;
+            line-height: 1.6;
+            color: #1e293b;
+            background-color: #ffffff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .cover-page {
+            page-break-after: always;
+            padding-top: 60px;
+            text-align: center;
+        }
+
+        .cover-badge {
+            display: inline-block;
+            background-color: #e0e7ff;
+            color: #3730a3;
+            font-size: 9pt;
+            font-weight: 700;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 24px;
+            border: 1px solid #c7d2fe;
+        }
+
+        .cover-title {
+            font-size: 26pt;
+            font-weight: 800;
+            color: #0f172a;
+            line-height: 1.2;
+            margin-bottom: 12px;
+            letter-spacing: -0.5px;
+        }
+
+        .cover-subtitle {
+            font-size: 13pt;
+            color: #475569;
+            max-width: 600px;
+            margin: 0 auto 40px auto;
+            line-height: 1.5;
+        }
+
+        .cover-meta {
+            margin: 50px auto 0 auto;
+            max-width: 500px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: left;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+            font-size: 9.5pt;
+        }
+
+        .meta-row:last-child {
+            border-bottom: none;
+        }
+
+        .meta-label {
+            font-weight: 600;
+            color: #64748b;
+        }
+
+        .meta-value {
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        h1 {
+            font-size: 16pt;
+            font-weight: 800;
+            color: #0f172a;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 8px;
+            margin-top: 36px;
+            margin-bottom: 16px;
+            page-break-after: avoid;
+        }
+
+        h2 {
+            font-size: 12.5pt;
+            font-weight: 700;
+            color: #1e293b;
+            margin-top: 24px;
+            margin-bottom: 10px;
+            page-break-after: avoid;
+        }
+
+        h3 {
+            font-size: 11pt;
+            font-weight: 600;
+            color: #334155;
+            margin-top: 18px;
+            margin-bottom: 8px;
+            page-break-after: avoid;
+        }
+
+        p {
+            margin: 0 0 10px 0;
+            text-align: justify;
+        }
+
+        ul, ol {
+            margin: 0 0 12px 0;
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 16px 0 24px 0;
+            font-size: 8.5pt;
+            page-break-inside: auto;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        th {
+            background-color: #0f172a;
+            color: #ffffff;
+            font-weight: 700;
+            text-align: left;
+            padding: 8px 10px;
+            border: 1px solid #0f172a;
+        }
+
+        td {
+            padding: 7px 10px;
+            border: 1px solid #cbd5e1;
+            vertical-align: top;
+        }
+
+        tr:nth-child(even) td {
+            background-color: #f8fafc;
+        }
+
+        code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8.5pt;
+            background-color: #f1f5f9;
+            color: #4338ca;
+            padding: 2px 5px;
+            border-radius: 4px;
+            border: 1px solid #e2e8f0;
+        }
+
+        pre {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 8pt;
+            background-color: #0f172a;
+            color: #e2e8f0;
+            padding: 12px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 12px 0 16px 0;
+            line-height: 1.45;
+            page-break-inside: avoid;
+        }
+
+        .badge-verified {
+            display: inline-block;
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+            border: 1px solid #bbf7d0;
+        }
+
+        .badge-partial {
+            display: inline-block;
+            background-color: #fef9c3;
+            color: #854d0e;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+            border: 1px solid #fef08a;
+        }
+
+        .badge-not-implemented {
+            display: inline-block;
+            background-color: #fee2e2;
+            color: #991b1b;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+            border: 1px solid #fecaca;
+        }
+
+        .badge-orphaned {
+            display: inline-block;
+            background-color: #f1f5f9;
+            color: #475569;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+            font-size: 7.5pt;
+            border: 1px solid #cbd5e1;
+        }
+
+        .callout-box {
+            background-color: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 9pt;
+        }
+
+        .callout-warning {
+            background-color: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 12px 16px;
+            margin: 14px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 9pt;
+        }
+
+        .page-break {
+            page-break-before: always;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- COVER PAGE -->
+    <div class="cover-page">
+        <div class="cover-badge">Academic &amp; Technical Audit Report</div>
+        <div class="cover-title">AI MOCK INTERVIEW 2.0</div>
+        <div class="cover-subtitle">
+            Comprehensive Module Analysis, Actual Database Verification, and Source-Code Evidentiary Architectural Audit
+        </div>
+
+        <div class="cover-meta">
+            <div class="meta-row">
+                <span class="meta-label">Project Name:</span>
+                <span class="meta-value">MAPD AI Mock Interview 2.0</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Repository:</span>
+                <span class="meta-value">AI-Mock-Interview-2.0-main</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Audit Scope:</span>
+                <span class="meta-value">8 System Modules &amp; Actual Storage Providers</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Audit Methodology:</span>
+                <span class="meta-value">Read-Only Static Code &amp; Config Inspection</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Primary Framework:</span>
+                <span class="meta-value">Next.js 15.4.10 / React 19.1.0 / TypeScript</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Primary Database:</span>
+                <span class="meta-value">Convex Serverless Document DB (v1.25.4)</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Auth Provider:</span>
+                <span class="meta-value">Clerk (v6.39.7)</span>
+            </div>
+            <div class="meta-row">
+                <span class="meta-label">Audit Date:</span>
+                <span class="meta-value">October 2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 1 -->
+    <h1>1. Project Overview</h1>
+    <p>
+        <strong>MAPD AI Mock Interview 2.0</strong> is a full-stack web application architected using <strong>Next.js 15 (App Router)</strong>, <strong>React 19</strong>, and <strong>TypeScript</strong>. The system facilitates end-to-end technical interview simulations for software engineering candidates across diverse roles and framework specializations.
+    </p>
+    <p>
+        Unlike conventional mock interview platforms that rely solely on static questionnaires or mock static landing pages, this project integrates live speech interactions, adaptive dynamic follow-up questioning, real-time in-browser computer vision posture tracking, and multi-cloud video recording persistence.
+    </p>
+    <div class="callout-box">
+        <strong>Audit Purpose &amp; Grounding:</strong> This document serves as an exhaustive, evidence-based technical reference for academic evaluations, project vivas, and architectural defense. Every claim in this document is directly supported by citations of executable source files, initialized SDKs, and database schema declarations.
+    </div>
+
+    <!-- SECTION 2 -->
+    <h1>2. Comprehensive Explanation of the Eight Modules</h1>
+
+    <h2>Module 1: User Authentication Module</h2>
+    <p>
+        Authentication is managed exclusively by <strong>Clerk</strong> (<code>@clerk/nextjs</code>, v6.39.7). Clerk provides managed user authentication, session tokens (JWTs), OAuth provider integrations, and edge route middleware protection.
+    </p>
+    <ul>
+        <li><strong>Protected Routes:</strong> Configured in <code>middleware.ts</code> using <code>clerkMiddleware</code> and <code>createRouteMatcher</code>. Public routes are <code>/</code>, <code>/sign-in(.*)</code>, <code>/sign-up(.*)</code>, <code>/questions(.*)</code>, <code>/upgrade(.*)</code>, and <code>/how-it-works(.*)</code>. All other routes require <code>await auth.protect()</code>.</li>
+        <li><strong>API Endpoint Security:</strong> Server routes invoke <code>await currentUser()</code> or <code>await auth()</code> from <code>@clerk/nextjs/server</code>, returning HTTP 401 Unauthorized if no active user session exists.</li>
+        <li><strong>User Profile Persistence:</strong> User credentials remain in Clerk's secure cloud, while profile details (name, email, imageUrl) are mirrored into Convex database table <code>UserTable</code> via the mutation <code>api.users.CreateNewUser</code> invoked in <code>app/Provider.tsx</code> upon login.</li>
+        <li><strong>Evidence Files:</strong> <code>middleware.ts</code> (Lines 1-26), <code>app/layout.tsx</code> (Lines 33-44), <code>app/Provider.tsx</code> (Lines 8-32), <code>convex/users.ts</code> (Lines 4-34), <code>convex/schema.ts</code> (Lines 5-9).</li>
+    </ul>
+
+    <h2>Module 2: Interview Setup Module</h2>
+    <p>
+        Candidates configure their mock interview using a client-side modal dialog (<code>CreateInterviewDialog.tsx</code>).
+    </p>
+    <ul>
+        <li><strong>Configuration Fields:</strong>
+            <ul>
+                <li><code>jobTitle</code>: Job Role / Position (e.g., "Senior Java Developer") [Mandatory text].</li>
+                <li><code>techStack</code>: Targeted frameworks / tools (e.g., "Spring Boot, SQL") [Optional text].</li>
+                <li><code>experienceLevel</code>: Select dropdown ("Fresher", "0–1 years", "1–2 years" [default], "2–3 years", "3+ years (Senior)").</li>
+                <li><code>interviewerGender</code>: AI Persona toggle ("male" - Alex Vance, or "female" - Sarah Jenkins [default]).</li>
+                <li><code>jobDescription</code>: Detailed role requirements [Mandatory textarea].</li>
+                <li><code>file</code>: Optional resume PDF upload (MIME <code>application/pdf</code>, max 10MB).</li>
+            </ul>
+        </li>
+        <li><strong>Validation &amp; Creation:</strong> Validates role and description strings, sends multipart FormData to <code>POST /api/generate-interview-questions</code>, and persists the created session via Convex mutation <code>api.Interview.SaveInterviewQuestion</code> with initial status <code>'draft'</code>.</li>
+        <li><strong>Evidence Files:</strong> <code>app/(routes)/_components/CreateInterviewDialog.tsx</code> (Lines 23-167), <code>convex/Interview.ts</code> (Lines 4-29), <code>convex/schema.ts</code> (Lines 11-31).</li>
+    </ul>
+
+    <h2>Module 3: Resume Upload Module</h2>
+    <p>
+        The resume upload module provides optional resume attachment during interview creation.
+    </p>
+    <ul>
+        <li><strong>Supported Format:</strong> <strong>PDF only</strong> (<code>application/pdf</code>), enforced in <code>CreateInterviewDialog.tsx</code> (Line 46) and size limit &le; 10 MB.</li>
+        <li><strong>Actual Storage Service:</strong> <strong>ImageKit</strong> (<code>imagekit</code> SDK v6.0.0). Verified in <code>app/api/generate-interview-questions/route.tsx</code> (Lines 47-67). Uploads via <code>imagekit.upload()</code> and stores the returned CDN URL in Convex <code>InterviewSessionTable.resumeUrl</code>.</li>
+        <li><strong>Fallback Storage:</strong> <strong>None.</strong> If ImageKit credentials are unconfigured or dummy, <code>resumeUrl</code> remains empty. Convex/Supabase fallbacks exist exclusively for video recordings.</li>
+        <li><strong>Content Parsing Status:</strong> <strong>Not implemented in executable code.</strong> The PDF is uploaded to ImageKit, but no text extraction (OCR, <code>pdf-parse</code>) is performed. Questions are generated from user-entered form text.</li>
+        <li><strong>Deletion Status:</strong> <strong>Not implemented.</strong> No endpoint exists to delete resume PDFs from ImageKit.</li>
+        <li><strong>Evidence Files:</strong> <code>CreateInterviewDialog.tsx</code> (Lines 42-68), <code>app/api/generate-interview-questions/route.tsx</code> (Lines 47-67).</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2>Module 4: AI Question Generation Module</h2>
+    <p>
+        Questions are generated through a dual-engine mechanism:
+    </p>
+    <ul>
+        <li><strong>Initial 8-Phase Question Generation:</strong> Executed deterministically by <code>generateRoleAwareQuestions()</code> in <code>lib/roleInterviewerEngine.ts</code>. The role is mapped to 13 domains (Java, Python, Frontend, Backend, Fullstack, AI/ML, Data Science, Analyst, DevOps, Cloud, QA, Cybersecurity, Software Engineer). Constructs 8 structured phases:
+            <ol>
+                <li>Introduction (Easy)</li>
+                <li>Role Fundamentals (Easy)</li>
+                <li>Intermediate Concepts (Medium)</li>
+                <li>Practical &amp; Programming Logic (Medium)</li>
+                <li>Project Discussion (Medium)</li>
+                <li>Resume &amp; Stack Deep-Dive (Medium)</li>
+                <li>Problem Solving &amp; Latency Scenarios (Hard)</li>
+                <li>HR &amp; Behavioral STAR (Easy)</li>
+            </ol>
+        </li>
+        <li><strong>Dynamic Adaptive Follow-Up (LLM):</strong> Executed by <code>POST /api/generate-followup-question</code> calling <code>generateAdaptiveFollowUp()</code>.
+            <ul>
+                <li><strong>Model Configured:</strong> <strong>Google Gemini 1.5 Flash</strong> (<code>gemini-1.5-flash</code>) via REST endpoint: <code>https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}</code>.</li>
+                <li><strong>Fallback:</strong> If Gemini is unconfigured or times out (7000ms), executes rule-based pivoting when candidates struggle ("I don't know") or keyword-probing for Spring, JWT, React, SQL, Docker, Pandas, PyTorch, etc.</li>
+            </ul>
+        </li>
+        <li><strong>Evidence Files:</strong> <code>lib/roleInterviewerEngine.ts</code> (Lines 44-531), <code>app/api/generate-followup-question/route.tsx</code> (Lines 4-30), <code>convex/Interview.ts</code> (Lines 4-29).</li>
+    </ul>
+
+    <h2>Module 5: Interactive Interview Session Module</h2>
+    <p>
+        Implemented in <code>app/(routes)/interview/[interviewId]/start/page.tsx</code>, handling live interaction, hardware capture, and recording.
+    </p>
+    <ul>
+        <li><strong>Media Hardware:</strong> Connects webcam and microphone via <code>navigator.mediaDevices.getUserMedia()</code>. Gracefully degrades to text mode if hardware is blocked.</li>
+        <li><strong>Voice Synthesis &amp; Recognition:</strong> Native browser <strong>Web Speech API</strong>. Text-to-Speech (TTS) uses <code>window.speechSynthesis</code> with customized pitch (0.9 for male Alex Vance, 1.1 for female Sarah Jenkins). Speech-to-Text (STT) uses <code>webkitSpeechRecognition</code> for continuous voice transcription.</li>
+        <li><strong>Computer Vision Telemetry:</strong> Implemented in <code>utils/facialAnalysis.ts</code>. Every 1200ms, an in-memory Canvas 2D samples webcam pixels ($320 	imes 240$), computing perceived luminance and skin-color centroid coordinates to estimate eye contact ($65\%-98\%$), head posture ("Centered", "Slight Tilt", "Looking Away"), and composure.</li>
+        <li><strong>Video Recording &amp; Multi-Tier Storage:</strong> MediaRecorder captures <code>video/webm</code>. When the interview ends:
+            <ol>
+                <li><strong>Tier 0:</strong> Instantly buffers to browser <strong>IndexedDB</strong> (<code>MAPD_Interview_Recordings_DB</code>).</li>
+                <li><strong>Tier 1:</strong> Uploads directly to <strong>Convex Cloud Object Storage</strong> via signed URL.</li>
+                <li><strong>Tier 2 (Fallback):</strong> Uploads to <strong>Supabase Storage</strong> bucket <code>interview-recordings</code> (if configured).</li>
+                <li><strong>Tier 3 (Fallback):</strong> Uploads to <strong>ImageKit</strong> folder <code>/recordings/${userId}</code>.</li>
+                <li><strong>Tier 4 (Fallback):</strong> Writes directly to server local disk at <code>public/uploads/recordings/${fileName}</code>.</li>
+            </ol>
+        </li>
+        <li><strong>Evidence Files:</strong> <code>start/page.tsx</code> (Lines 1-1219), <code>utils/facialAnalysis.ts</code> (Lines 1-137), <code>utils/recordingStorage.ts</code> (Lines 1-287), <code>app/api/upload-recording/route.ts</code> (Lines 1-165).</li>
+    </ul>
+
+    <h2>Module 6: Response Evaluation and Scoring Module</h2>
+    <p>
+        Evaluates candidate spoken answers at <code>POST /api/interview-feedback</code>.
+    </p>
+    <ul>
+        <li><strong>Evaluation Logic:</strong> <strong>Deterministic rule-based evaluation</strong> (<code>evaluateCandidateAnswers</code>). The feedback endpoint does not call Gemini LLM, ensuring zero hallucinations.</li>
+        <li><strong>Criteria:</strong>
+            <ul>
+                <li>Word count scoring: 0 words = 3.0/10; &lt;15 words = 5.5/10; &ge;15 words = 8.5/10 with keyword depth checks.</li>
+                <li>Filler words: Regex scan <code>/(um|uh|like|you know|basically|actually|sort of|kind of)/gi</code>.</li>
+                <li>Speaking Pace: Calculated in Words Per Minute (WPM).</li>
+                <li>Weighted formula: <code>Rating = (Technical &times; 35%) + (ProblemSolving &times; 25%) + (Relevance &times; 15%) + (Completeness &times; 15%) + (Communication &times; 10%)</code>.</li>
+                <li>STAR answers: Generates Situation-Task-Action-Result model answers for each question.</li>
+            </ul>
+        </li>
+        <li><strong>Persistence:</strong> Saves to Convex DB table <code>InterviewSessionTable.feedback</code> via <code>UpdateFeedback</code> mutation.</li>
+        <li><strong>Evidence Files:</strong> <code>app/api/interview-feedback/route.tsx</code> (Lines 1-326), <code>convex/Interview.ts</code> (Lines 70-105).</li>
+    </ul>
+
+    <h2>Module 7: Performance Dashboard Module</h2>
+    <p>
+        Provides analytics and interview session history in <code>app/(routes)/dashboard/page.tsx</code>.
+    </p>
+    <ul>
+        <li><strong>Metrics:</strong> Displays Total Sessions, Completed Sessions, Average Score, Practice Hours (Total Sessions &times; 0.5 hrs), score trajectory bar chart, and filterable interview cards.</li>
+        <li><strong>Data Source Verification:</strong>
+            <ul>
+                <li><strong>Live Backend Data:</strong> Query <code>api.Interview.GetInterviewList</code> queries Convex DB in real-time.</li>
+                <li><strong>Hardcoded Elements:</strong> Aggregated Skill Competency progress bars in <code>ProgressAnalytics.tsx</code> use static values (8.2, 7.8, 8.5, 8.4).</li>
+                <li><strong>Local Storage:</strong> Bookmarked flashcards dialog reads from <code>localStorage.getItem("mapd_saved_flashcards")</code>.</li>
+            </ul>
+        </li>
+        <li><strong>Evidence Files:</strong> <code>dashboard/page.tsx</code> (Lines 1-222), <code>ProgressAnalytics.tsx</code> (Lines 1-124), <code>InterviewCard.tsx</code> (Lines 1-233).</li>
+    </ul>
+
+    <h2>Module 8: Database and Session Management Module</h2>
+    <p>
+        Carefully verified through source code and dependencies:
+    </p>
+    <ul>
+        <li><strong>Primary Database:</strong> <strong>Convex</strong> (v1.25.4) serverless reactive document database. Stores <code>UserTable</code> and <code>InterviewSessionTable</code>.</li>
+        <li><strong>Supabase PostgreSQL Verification:</strong> <strong>NOT USED.</strong> No SQL schemas, migrations, or tables exist in Supabase. Supabase is referenced in code solely for optional video file storage.</li>
+        <li><strong>Convex Dual Role:</strong> Convex serves as both the primary reactive document database and the serverless TypeScript query/mutation execution platform.</li>
+        <li><strong>Session Cleanup:</strong> <code>InterviewCard.tsx</code> invokes <code>DeleteInterview</code> mutation to delete records from Convex and calls <code>/api/delete-recording</code> to unlink local disk files or delete from cloud storage.</li>
+        <li><strong>Evidence Files:</strong> <code>convex/schema.ts</code> (Lines 1-32), <code>convex/Interview.ts</code> (Lines 1-243), <code>convex/users.ts</code> (Lines 1-34).</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 3 -->
+    <h1>3. Module-Wise Input, Processing, and Output Details</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 14%;">Module</th>
+                <th style="width: 20%;">Inputs</th>
+                <th style="width: 32%;">Processing Logic</th>
+                <th style="width: 22%;">Outputs / Side Effects</th>
+                <th style="width: 12%;">Key Source</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>1. Authentication</strong></td>
+                <td>OAuth credentials, Clerk session tokens</td>
+                <td>Clerk edge route interception, session token verification, Convex user record synchronization</td>
+                <td>Active session cookie, mirror record in Convex <code>UserTable</code></td>
+                <td><code>middleware.ts</code>, <code>users.ts</code></td>
+            </tr>
+            <tr>
+                <td><strong>2. Setup</strong></td>
+                <td>Role, tech stack, experience, persona, PDF file</td>
+                <td>Client validation, user resolution, dispatching generation request, session creation</td>
+                <td>Convex <code>InterviewSessionTable</code> record (<code>status: 'draft'</code>)</td>
+                <td><code>CreateInterviewDialog.tsx</code></td>
+            </tr>
+            <tr>
+                <td><strong>3. Resume Upload</strong></td>
+                <td>PDF file buffer (&le; 10 MB)</td>
+                <td>ImageKit API binary upload call, URL capture</td>
+                <td>Public CDN URL stored in <code>resumeUrl</code></td>
+                <td><code>route.tsx</code> (questions)</td>
+            </tr>
+            <tr>
+                <td><strong>4. Question Gen</strong></td>
+                <td>Role, stack, experience strings, answers</td>
+                <td>13-domain role normalization, 8-phase rule engine, Google Gemini 1.5 Flash adaptive follow-ups</td>
+                <td>8-phase Question array, dynamic follow-up JSON</td>
+                <td><code>roleInterviewerEngine.ts</code></td>
+            </tr>
+            <tr>
+                <td><strong>5. Live Session</strong></td>
+                <td>Webcam video stream, mic audio stream</td>
+                <td>Web Speech TTS/STT, Canvas 2D skin centroid sampling, MediaRecorder video chunking</td>
+                <td>Live dialogue transcript, real-time composure metrics, WebM video blob</td>
+                <td><code>start/page.tsx</code>, <code>facialAnalysis.ts</code></td>
+            </tr>
+            <tr>
+                <td><strong>6. Evaluation</strong></td>
+                <td>Spoken transcripts, questions, duration</td>
+                <td>Deterministic transcript word/keyword matching, filler word regex count, WPM calculation</td>
+                <td>Weighted score (1-10), filler analytics, STAR model feedback</td>
+                <td><code>interview-feedback/route.tsx</code></td>
+            </tr>
+            <tr>
+                <td><strong>7. Dashboard</strong></td>
+                <td>Convex User ID (<code>uid</code>)</td>
+                <td>Reactive Convex database queries, score averaging, client-side filtering</td>
+                <td>Total/completed metrics, session cards, score progression chart</td>
+                <td><code>dashboard/page.tsx</code></td>
+            </tr>
+            <tr>
+                <td><strong>8. DB &amp; Storage</strong></td>
+                <td>Session metadata, video blobs</td>
+                <td>Convex schema validation, 4-tier storage pipeline, cascade deletion</td>
+                <td>Persistent document records, cloud/disk media storage</td>
+                <td><code>convex/schema.ts</code>, <code>recordingStorage.ts</code></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- SECTION 4 -->
+    <h1>4. Verified Technology Stack Table</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 18%;">Component</th>
+                <th style="width: 22%;">Actual Technology / Service</th>
+                <th style="width: 25%;">Purpose</th>
+                <th style="width: 20%;">Source Evidence</th>
+                <th style="width: 15%;">Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Framework</strong></td>
+                <td>Next.js 15.4.10 (App Router)</td>
+                <td>Full-stack application architecture, SSR, API routes</td>
+                <td><code>package.json</code>, <code>app/layout.tsx</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Frontend Library</strong></td>
+                <td>React 19.1.0</td>
+                <td>UI component hierarchy and state hooks</td>
+                <td><code>package.json</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Language</strong></td>
+                <td>TypeScript ^5</td>
+                <td>Static type safety across components and schemas</td>
+                <td><code>tsconfig.json</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Styling</strong></td>
+                <td>Tailwind CSS v4 &amp; Radix UI</td>
+                <td>Utility-first styles, dark mode, dialog/tabs</td>
+                <td><code>globals.css</code>, <code>tailwind.config.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Authentication</strong></td>
+                <td>Clerk (<code>@clerk/nextjs</code> ^6.39.7)</td>
+                <td>Identity, OAuth, session JWTs, edge middleware</td>
+                <td><code>middleware.ts</code>, <code>app/Provider.tsx</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Primary Database</strong></td>
+                <td>Convex Serverless DB (^1.25.4)</td>
+                <td>Reactive document database &amp; cloud functions</td>
+                <td><code>convex/schema.ts</code>, <code>Interview.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Offline Client DB</strong></td>
+                <td>HTML5 IndexedDB</td>
+                <td>Zero-loss client video buffering before upload</td>
+                <td><code>utils/recordingStorage.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>AI LLM Engine</strong></td>
+                <td>Google Gemini 1.5 Flash</td>
+                <td>Dynamic adaptive interviewer follow-ups</td>
+                <td><code>lib/roleInterviewerEngine.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Resume Storage</strong></td>
+                <td>ImageKit (<code>imagekit</code> ^6.0.0)</td>
+                <td>Cloud media CDN for uploaded resume PDFs</td>
+                <td><code>generate-interview-questions/route.tsx</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Video Storage (Primary)</strong></td>
+                <td>Convex Cloud Object Storage</td>
+                <td>Direct client binary upload bypassing serverless limits</td>
+                <td><code>convex/Interview.ts</code> (GenerateUploadUrl)</td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Video Storage (Cloud 1)</strong></td>
+                <td>Supabase Storage (Bucket)</td>
+                <td>Secondary fallback (bucket <code>interview-recordings</code>)</td>
+                <td><code>upload-recording/route.ts</code></td>
+                <td><span class="badge-partial">Partially Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Video Storage (Cloud 2)</strong></td>
+                <td>ImageKit Object Storage</td>
+                <td>Tertiary fallback for recorded videos</td>
+                <td><code>upload-recording/route.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Video Storage (Disk)</strong></td>
+                <td>Local Server Filesystem</td>
+                <td>Quaternary fallback (<code>public/uploads/recordings</code>)</td>
+                <td><code>upload-recording/route.ts</code> (5 files present)</td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Voice Interaction</strong></td>
+                <td>Native Web Speech API (TTS/STT)</td>
+                <td>Browser voice reading and candidate dictation</td>
+                <td><code>start/page.tsx</code>, <code>interviewerConfig.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Vision Telemetry</strong></td>
+                <td>Native Canvas 2D Heuristics</td>
+                <td>Skin centroid posture and eye contact tracking</td>
+                <td><code>utils/facialAnalysis.ts</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Rate Limiting</strong></td>
+                <td>Arcjet (<code>@arcjet/next</code>)</td>
+                <td>Token bucket rate limiting on question generation</td>
+                <td><code>utils/arcjet.ts</code>, <code>generate-interview-questions</code></td>
+                <td><span class="badge-verified">Verified</span></td>
+            </tr>
+            <tr>
+                <td><strong>Streaming Avatar</strong></td>
+                <td>Akool Avatar SDK</td>
+                <td>Live avatar streaming SDK &amp; API routes</td>
+                <td><code>package.json</code>, <code>akool-session/route.ts</code></td>
+                <td><span class="badge-orphaned">Orphaned in UI</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 5 -->
+    <h1>5. Database Architecture and Data Persistence</h1>
+    <p>
+        The sole operational database is <strong>Convex</strong>, an event-driven serverless document database. Traditional SQL engines (PostgreSQL, MySQL) are absent from the executable stack.
+    </p>
+
+    <h2>Data Model Schemas (<code>convex/schema.ts</code>)</h2>
+    <pre>
+1. UserTable:
+   - _id: Id<'UserTable'> (Primary Key, Auto-generated)
+   - name: string (Candidate Full Name from Clerk)
+   - email: string (Unique Candidate Email Address)
+   - imageUrl: string (Avatar Profile URL)
+
+2. InterviewSessionTable:
+   - _id: Id<'InterviewSessionTable'> (Primary Key, Auto-generated)
+   - userId: Id<'UserTable'> (Foreign Key referencing UserTable)
+   - status: string ('draft' | 'complete')
+   - jobTitle: string | null
+   - jobDescription: string | null
+   - experienceLevel: optional(string | null)
+   - techStack: optional(string | null)
+   - interviewerGender: optional(string | null) ('male' | 'female')
+   - interviewQuestions: array of QuestionItem { question, answer, category, phase }
+   - candidateAnswers: optional array of { question, answer, timestampSeconds }
+   - questionTimestamps: optional array of { questionIndex, formattedTime }
+   - feedback: optional complete Evaluation Report JSON
+   - weakTopics: optional array of string knowledge gaps
+   - resumeUrl: string | null (ImageKit CDN URL)
+   - recordingUrl: optional string | null (Convex / Disk / Cloud URL)
+   - recordingId: optional string | null (Storage ID)
+   - storageProvider: optional string ('convex' | 'supabase' | 'imagekit' | 'server')
+   - fileSize: optional number (bytes)
+   - durationSeconds: optional number (seconds)
+    </pre>
+
+    <!-- SECTION 6 -->
+    <h1>6. File and Media Storage Architecture</h1>
+    <p>
+        Storage handling is segregated between resume documents and session video recordings:
+    </p>
+    <ul>
+        <li><strong>Resumes (PDFs):</strong> Uploaded directly via <code>imagekit.upload()</code> in <code>app/api/generate-interview-questions/route.tsx</code>. Stores public URL in <code>InterviewSessionTable.resumeUrl</code>. No local fallback or deletion mechanism exists for resumes.</li>
+        <li><strong>Video Recordings (.webm):</strong> Managed via a four-tier resilient fallback hierarchy:
+            <ol>
+                <li><strong>Browser IndexedDB Buffer:</strong> Saved to <code>MAPD_Interview_Recordings_DB</code> before network transmission.</li>
+                <li><strong>Convex Cloud Object Storage:</strong> Primary cloud destination via direct signed binary upload (<code>generateUploadUrl</code>).</li>
+                <li><strong>Supabase Storage:</strong> Fallback to bucket <code>interview-recordings</code> under <code>${userId}/${fileName}</code>.</li>
+                <li><strong>ImageKit Object Storage:</strong> Secondary cloud fallback to folder <code>/recordings/${userId}</code>.</li>
+                <li><strong>Local Server Disk:</strong> Quaternary fallback writing to <code>public/uploads/recordings/${fileName}</code> using Node.js <code>fs.writeFileSync</code>. (5 actual active files verified on disk).</li>
+            </ol>
+        </li>
+    </ul>
+
+    <!-- SECTION 7 -->
+    <h1>7. Interview Session Lifecycle and Data Flow</h1>
+    <ol>
+        <li><strong>Setup:</strong> Candidate completes setup dialog; PDF resume uploaded to ImageKit; initial 8-phase questions generated via <code>lib/roleInterviewerEngine.ts</code>; record saved to Convex (<code>status: 'draft'</code>).</li>
+        <li><strong>Readiness Check:</strong> Candidate validates camera/mic in <code>/interview/[id]</code> and selects interviewer persona.</li>
+        <li><strong>Live Execution:</strong> Candidate starts session in <code>/interview/[id]/start</code>; MediaRecorder captures video; Web Speech API synthesizes spoken questions; Canvas 2D tracks posture/eye contact; STT captures candidate voice; Gemini 1.5 Flash generates adaptive follow-up probes.</li>
+        <li><strong>Conclusion:</strong> MediaRecorder stops; video blob is buffered in IndexedDB and uploaded via the 4-tier pipeline; <code>/api/interview-feedback</code> evaluates transcripts; Convex record updated to <code>status: 'complete'</code>.</li>
+        <li><strong>Review &amp; Feedback:</strong> Candidate inspects radar chart and STAR answers in <code>/interview/[id]/feedback</code>, reviews recorded video in <code>/interview/[id]/playback</code>, or generates targeted practice for weak areas.</li>
+    </ol>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 8 -->
+    <h1>8. Text-Based System Architecture Diagram</h1>
+    <pre>
++───────────────────────────────────────────────────────────────────────────────────+
+|                                  CLIENT LAYER (BROWSER)                           |
+|                                                                                   |
+|  [ Clerk Auth Components ]      [ Media Capture & Canvas 2D ]  [ Web Speech API ] |
+|  - <SignIn /> / <SignUp />      - Camera / Mic getUserMedia()  - SpeechSynthesis  |
+|  - Edge Route Protection        - Canvas 2D Skin Centroid      - SpeechRecognition|
+|                                 - MediaRecorder (.webm)                           |
+|                                 - IndexedDB Local Buffer                          |
++──────────────────────────────────────────┬────────────────────────────────────────+
+                                           │
+                                           ▼
++───────────────────────────────────────────────────────────────────────────────────+
+|                             NEXT.JS 15 APP ROUTER & API                           |
+|                                                                                   |
+|  [ /api/generate-interview-questions ]      [ /api/generate-followup-question ]   |
+|  - Arcjet Rate Limiting                     - Google Gemini 1.5 Flash API         |
+|  - ImageKit Resume Upload                   - Struggle & Keyword Fallback Rules   |
+|  - lib/roleInterviewerEngine.ts                                                   |
+|                                                                                   |
+|  [ /api/interview-feedback ]                [ /api/upload-recording ]             |
+|  - Deterministic Transcript Rules           - 1. Convex Cloud Storage             |
+|  - Regex Verbal Filler Analyzer             - 2. Supabase Storage (Bucket)        |
+|  - Words Per Minute (WPM) Calculator        - 3. ImageKit Storage Folder          |
+|  - 5-Dimension Weighted Score Formula       - 4. Server Disk Storage (public/)    |
++──────────────────────────────────────────┬────────────────────────────────────────+
+                                           │
+                                           ▼
++───────────────────────────────────────────────────────────────────────────────────+
+|                          PERSISTENCE & EXTERNAL SERVICES                          |
+|                                                                                   |
+|  [ CONVEX CLOUD PLATFORM ]                  [ THIRD-PARTY CLOUD APIS ]            |
+|  - Reactive Document Database               - Clerk Authentication Cloud          |
+|    * UserTable                              - Google Gemini 1.5 Flash REST API    |
+|    * InterviewSessionTable                  - ImageKit CDN (Resumes/Recordings)   |
+|  - Convex Cloud Object Storage              - Arcjet Security Engine              |
++───────────────────────────────────────────────────────────────────────────────────+
+    </pre>
+
+    <!-- SECTION 9 -->
+    <h1>9. Feature Verification Table</h1>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 25%;">Feature Description</th>
+                <th style="width: 18%;">Status</th>
+                <th style="width: 57%;">Implementation Details &amp; Evidence</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Clerk User Authentication</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Clerk components in <code>app/(auth)/*</code>, middleware in <code>middleware.ts</code>, Convex sync in <code>convex/users.ts</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Interview Setup Dialog</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Modal configuration in <code>CreateInterviewDialog.tsx</code> with role, stack, experience, and persona.</td>
+            </tr>
+            <tr>
+                <td><strong>ImageKit Resume Upload</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>PDF upload to ImageKit via <code>imagekit.upload()</code> in <code>generate-interview-questions/route.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Resume PDF Content Parsing</strong></td>
+                <td><span class="badge-not-implemented">Not Implemented</span></td>
+                <td>No text parsing libraries (OCR, <code>pdf-parse</code>) exist; questions are derived solely from form fields.</td>
+            </tr>
+            <tr>
+                <td><strong>Resume Cloud Deletion</strong></td>
+                <td><span class="badge-not-implemented">Not Implemented</span></td>
+                <td>No endpoint or function exists to delete resume PDFs from ImageKit storage.</td>
+            </tr>
+            <tr>
+                <td><strong>8-Phase Question Generation</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Deterministic 13-domain progression compiled via <code>lib/roleInterviewerEngine.ts</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Gemini 1.5 Flash Follow-ups</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Live adaptive follow-ups via Gemini 1.5 Flash REST API in <code>generate-followup-question/route.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Speech Synthesis &amp; Recog (TTS/STT)</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Browser native Web Speech API with gender-matching voice selection in <code>start/page.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Canvas 2D Vision Telemetry</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Real-time skin centroid pixel heuristic calculation in <code>utils/facialAnalysis.ts</code> (no external ML models).</td>
+            </tr>
+            <tr>
+                <td><strong>IndexedDB Offline Video Buffer</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Local video buffering in <code>MAPD_Interview_Recordings_DB</code> in <code>utils/recordingStorage.ts</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Convex Cloud Object Storage</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Direct binary upload via <code>GenerateUploadUrl</code> in <code>convex/Interview.ts</code> and <code>recordingStorage.ts</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Supabase Bucket Storage</strong></td>
+                <td><span class="badge-partial">Partially Verified</span></td>
+                <td>Upload logic written in <code>upload-recording/route.ts</code>, but unconfigured in <code>.env.local</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Server Disk Video Storage</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Fallback in <code>upload-recording/route.ts</code>; 5 active <code>.webm</code> files confirmed on disk.</td>
+            </tr>
+            <tr>
+                <td><strong>Spoken Transcript Evaluation</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Deterministic scoring, filler word counts, WPM, and STAR feedback in <code>interview-feedback/route.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Reactive Performance Dashboard</strong></td>
+                <td><span class="badge-partial">Partially Verified</span></td>
+                <td>Session metrics &amp; bar charts query live Convex DB; skill competency progress bars use hardcoded values.</td>
+            </tr>
+            <tr>
+                <td><strong>Video Playback with Timestamps</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Custom player with timestamp navigation in <code>interview/[interviewId]/playback/page.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Practice Weak Areas Auto-Gen</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Generates targeted session from <code>weakTopics</code> array in <code>feedback/page.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Bookmarked Flashcards</strong></td>
+                <td><span class="badge-verified">Implemented</span></td>
+                <td>Revision cards stored in client <code>localStorage</code> via <code>SavedFlashcards.tsx</code>.</td>
+            </tr>
+            <tr>
+                <td><strong>Akool Live Streaming Avatar</strong></td>
+                <td><span class="badge-orphaned">Orphaned in UI</span></td>
+                <td>SDK and API routes exist in codebase, but are never invoked in any user-facing UI component.</td>
+            </tr>
+            <tr>
+                <td><strong>Pro Stripe Payment Checkout</strong></td>
+                <td><span class="badge-not-implemented">Not Implemented</span></td>
+                <td>Static coming-soon placeholder card in <code>app/(routes)/upgrade/page.tsx</code>.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="page-break"></div>
+
+    <!-- SECTION 10 -->
+    <h1>10. Conclusion</h1>
+    <p>
+        The static source code verification of the <strong>AI Mock Interview 2.0</strong> codebase confirms the actual architectural foundation of the project:
+    </p>
+    <ul>
+        <li><strong>Database:</strong> The sole primary operational database is <strong>Convex</strong> (v1.25.4). <strong>Supabase PostgreSQL is not used.</strong></li>
+        <li><strong>Authentication:</strong> Managed exclusively by <strong>Clerk</strong> (v6.39.7), with profile metadata mirrored into Convex <code>UserTable</code>.</li>
+        <li><strong>Artificial Intelligence:</strong> Dynamic LLM generation uses <strong>Google Gemini 1.5 Flash</strong> via HTTP REST API for real-time follow-ups. Initial 8-phase questions and post-interview transcript evaluations are executed by custom <strong>deterministic rule-based engines</strong>.</li>
+        <li><strong>Media Storage:</strong> Resumes are stored on <strong>ImageKit</strong> without PDF text extraction. Video recordings use a resilient <strong>four-tier fallback</strong> (IndexedDB &rarr; Convex Storage &rarr; Supabase &rarr; ImageKit &rarr; Local Disk), with active disk files verified in the repository.</li>
+        <li><strong>Telemetry &amp; Voice:</strong> Face composure and eye contact tracking are achieved through native <strong>Canvas 2D skin centroid pixel heuristics</strong>, and speech synthesis/recognition is performed directly via browser <strong>Web Speech API</strong>.</li>
+    </ul>
+    <p>
+        This verified architecture ensures predictable performance, zero-cost client-side computer vision telemetry, high offline recording resilience, and transcript-grounded scoring integrity.
+    </p>
+
+</body>
+</html>
