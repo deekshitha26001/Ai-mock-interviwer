@@ -472,7 +472,6 @@ export function evaluateSingleAnswer(
 
     // 5. EXTRACT EXPECTED CONCEPTS & ANALYZE SEMANTIC OVERLAP
     const keyConcepts = extractKeyConcepts(expectedConcepts, qText);
-    const cleanedAnswer = cleanText(rawAnswer);
     const answerTokens = new Set(cleanedAnswer.split(" ").map(w => stemWord(w)));
 
     const matchedConcepts: string[] = [];
