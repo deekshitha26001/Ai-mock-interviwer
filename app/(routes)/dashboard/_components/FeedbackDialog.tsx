@@ -29,6 +29,12 @@ export type FeedbackInfo = {
     status?: string;
     knowledgeGaps?: string[];
     demonstratedSkills?: string[];
+    rubricAverages?: {
+        technical: number;
+        relevance: number;
+        completeness: number;
+        clarity: number;
+    };
     answerEvaluations?: any[];
 }
 
@@ -56,6 +62,31 @@ function FeedbackDialog({ feedbackInfo }: Props) {
                                     ))}
                                 </div>
                             </div>
+
+                            {feedbackInfo?.rubricAverages && (
+                                <div className="pt-2">
+                                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">10-Point Rubric Averages</h4>
+                                    <div className="grid grid-cols-4 gap-2 text-center">
+                                        <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/50">
+                                            <div className="text-[10px] text-slate-500 font-semibold">Technical</div>
+                                            <div className="text-xs font-bold text-indigo-600 dark:text-indigo-400">{feedbackInfo.rubricAverages.technical}/4</div>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/50">
+                                            <div className="text-[10px] text-slate-500 font-semibold">Relevance</div>
+                                            <div className="text-xs font-bold text-emerald-600 dark:text-emerald-400">{feedbackInfo.rubricAverages.relevance}/2</div>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/50">
+                                            <div className="text-[10px] text-slate-500 font-semibold">Complete</div>
+                                            <div className="text-xs font-bold text-blue-600 dark:text-blue-400">{feedbackInfo.rubricAverages.completeness}/2</div>
+                                        </div>
+                                        <div className="bg-slate-50 dark:bg-slate-900 p-2 rounded-xl border border-slate-200/50">
+                                            <div className="text-[10px] text-slate-500 font-semibold">Clarity</div>
+                                            <div className="text-xs font-bold text-amber-600 dark:text-amber-400">{feedbackInfo.rubricAverages.clarity}/2</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
                                 <span className='font-bold text-base text-slate-900 dark:text-white'>Rating:</span>
                                 <span className='font-extrabold text-xl text-indigo-600 dark:text-indigo-400'>{feedbackInfo?.rating} / 10</span>

@@ -268,7 +268,7 @@ export default function InterviewFeedbackPage() {
                         </div>
                     </div>
                     <div className="text-[10px] text-indigo-200 font-mono leading-tight bg-black/20 p-2 rounded-xl">
-                        Weighted Formula: (Tech*35%) + (Rel*25%) + (Prob*15%) + (Comm*15%) + (Comp*10%)
+                        Formula: Tech (35%) + Rel (25%) + Problem (15%) + Comm (15%) + Comp (10%)
                     </div>
                 </div>
 
@@ -463,11 +463,24 @@ export default function InterviewFeedbackPage() {
                                             </span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3 shrink-0">
+                                    <div className="flex items-center gap-2.5 shrink-0 flex-wrap justify-end">
                                         {isAnswered ? (
-                                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50">
-                                                Score: {evalItem?.questionScore ?? 0}/10
-                                            </span>
+                                            <>
+                                                {evalItem?.scoreBand && (
+                                                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+                                                        (evalItem.questionScore ?? 0) >= 7
+                                                            ? "bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                                                            : (evalItem.questionScore ?? 0) >= 4
+                                                            ? "bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800"
+                                                            : "bg-red-50 dark:bg-red-950/60 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800"
+                                                    }`}>
+                                                        {evalItem.scoreBand}
+                                                    </span>
+                                                )}
+                                                <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50">
+                                                    Score: {evalItem?.questionScore ?? 0}/10
+                                                </span>
+                                            </>
                                         ) : (
                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
                                                 Not answered (0/10)
@@ -498,28 +511,36 @@ export default function InterviewFeedbackPage() {
                                             </p>
                                         </div>
 
-                                        {/* Individual Question Metric Breakdown if answered */}
+                                        {/* Individual Question Rubric Breakdown if answered */}
                                         {isAnswered && (
-                                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/50 text-[11px]">
-                                                <div>
-                                                    <span className="text-slate-500 block text-[10px]">Tech (35%)</span>
-                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.technicalScore}/10</strong>
+                                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3.5 bg-slate-50 dark:bg-slate-950/60 rounded-2xl border border-slate-200/60 text-[11px]">
+                                                <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 space-y-0.5">
+                                                    <span className="text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">Technical (0–4 pts)</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <strong className="text-indigo-600 dark:text-indigo-400 font-extrabold text-sm">{evalItem?.technicalScore ?? 0}</strong>
+                                                        <span className="text-[10px] text-slate-400">/ 4</span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <span className="text-slate-500 block text-[10px]">Relevance (25%)</span>
-                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.relevanceScore}/10</strong>
+                                                <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 space-y-0.5">
+                                                    <span className="text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">Relevance (0–2 pts)</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <strong className="text-emerald-600 dark:text-emerald-400 font-extrabold text-sm">{evalItem?.relevanceScore ?? 0}</strong>
+                                                        <span className="text-[10px] text-slate-400">/ 2</span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <span className="text-slate-500 block text-[10px]">Problem (15%)</span>
-                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.problemSolvingScore}/10</strong>
+                                                <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 space-y-0.5">
+                                                    <span className="text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">Completeness (0–2 pts)</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <strong className="text-blue-600 dark:text-blue-400 font-extrabold text-sm">{evalItem?.completenessScore ?? 0}</strong>
+                                                        <span className="text-[10px] text-slate-400">/ 2</span>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <span className="text-slate-500 block text-[10px]">Comm (15%)</span>
-                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.communicationScore}/10</strong>
-                                                </div>
-                                                <div>
-                                                    <span className="text-slate-500 block text-[10px]">Complete (10%)</span>
-                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.completenessScore}/10</strong>
+                                                <div className="p-2.5 bg-white dark:bg-slate-900 rounded-xl border border-slate-200/50 dark:border-slate-800 space-y-0.5">
+                                                    <span className="text-slate-500 block text-[10px] font-semibold uppercase tracking-wider">Clarity (0–2 pts)</span>
+                                                    <div className="flex items-baseline gap-1">
+                                                        <strong className="text-amber-600 dark:text-amber-400 font-extrabold text-sm">{evalItem?.clarityScore ?? evalItem?.communicationScore ?? 0}</strong>
+                                                        <span className="text-[10px] text-slate-400">/ 2</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         )}

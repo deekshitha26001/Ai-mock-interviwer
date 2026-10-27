@@ -872,16 +872,29 @@ export default function StartInterview() {
             const status = isComplete ? 'complete' : 'incomplete';
 
             if (interviewId && updateFeedback) {
-                await updateFeedback({
-                    feedback: feedbackData,
-                    recordId: interviewId as any,
-                    durationSeconds: recordingDuration,
-                    questionTimestamps: questionTimestamps,
-                    candidateAnswers: finalCandidateAnswers,
-                    weakTopics: feedbackData.knowledgeGaps || [],
-                    status: status,
-                    ...(savedRecordingUrl ? { recordingUrl: savedRecordingUrl } : {})
-                });
+                try {
+                    await updateFeedback({
+                        feedback: feedbackData,
+                        recordId: interviewId as any,
+                        durationSeconds: recordingDuration,
+                        questionTimestamps: questionTimestamps,
+                        candidateAnswers: finalCandidateAnswers,
+                        weakTopics: feedbackData.knowledgeGaps || [],
+                        status: status,
+                        ...(savedRecordingUrl ? { recordingUrl: savedRecordingUrl } : {})
+                    });
+                } catch (updateErr: any) {
+                    console.warn("updateFeedback with status field encountered an issue, trying without status:", updateErr);
+                    await updateFeedback({
+                        feedback: feedbackData,
+                        recordId: interviewId as any,
+                        durationSeconds: recordingDuration,
+                        questionTimestamps: questionTimestamps,
+                        candidateAnswers: finalCandidateAnswers,
+                        weakTopics: feedbackData.knowledgeGaps || [],
+                        ...(savedRecordingUrl ? { recordingUrl: savedRecordingUrl } : {})
+                    });
+                }
             }
 
             toast.success('Performance evaluation complete!');

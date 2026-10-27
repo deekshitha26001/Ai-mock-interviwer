@@ -28,7 +28,7 @@ export default function ProgressAnalytics({ interviewList }: Props) {
     // Extract score trajectory over sessions
     const scoreData = completedList.map((item, idx) => ({
         label: `Interview ${idx + 1}`,
-        score: item.feedback?.rating || 7.5,
+        score: typeof item.feedback?.rating === 'number' ? item.feedback.rating : 0,
         jobTitle: item.jobTitle || "Technical Role",
         date: item._creationTime ? new Date(item._creationTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Session ${idx + 1}`
     }));

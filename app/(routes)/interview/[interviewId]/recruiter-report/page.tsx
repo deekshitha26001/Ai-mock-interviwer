@@ -192,7 +192,7 @@ export default function RecruiterReportPage() {
                     <div className="p-3.5 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800/60 space-y-1">
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Stress Index</span>
                         <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                            <Flame className={`w-4 h-4 ${(feedback.stressIndex || 22) > 45 ? "text-amber-500" : "text-emerald-500"}`} />
+                            <Flame className={`w-4 h-4 ${(typeof feedback.stressIndex === 'number' ? feedback.stressIndex : 20) > 45 ? "text-amber-500" : "text-emerald-500"}`} />
                             <span>{feedback.stressLevel || "Low (Calm)"}</span>
                         </div>
                     </div>
@@ -201,7 +201,7 @@ export default function RecruiterReportPage() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Confidence Rating</span>
                         <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                             <Smile className="w-4 h-4 text-indigo-500" />
-                            <span>{feedback.confidenceScore || 8.5} / 10</span>
+                            <span>{typeof feedback.confidenceScore === 'number' ? feedback.confidenceScore : 0} / 10</span>
                         </div>
                     </div>
 
@@ -209,7 +209,7 @@ export default function RecruiterReportPage() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Eye Contact Index</span>
                         <div className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
                             <Eye className="w-4 h-4 text-emerald-500" />
-                            <span>{feedback.facialExpressions?.eyeContactPercentage || 92}% Alignment</span>
+                            <span>{typeof feedback.facialExpressions?.eyeContactPercentage === 'number' ? feedback.facialExpressions.eyeContactPercentage : 0}% Alignment</span>
                         </div>
                     </div>
 
@@ -217,7 +217,7 @@ export default function RecruiterReportPage() {
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Verbal Delivery</span>
                         <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5 pt-0.5">
                             <MessageSquare className="w-4 h-4 text-purple-500" />
-                            <span>{feedback.speechPaceWpm || 135} WPM • {feedback.fillerWordsCount || 2} Fillers</span>
+                            <span>{typeof feedback.speechPaceWpm === 'number' ? feedback.speechPaceWpm : 0} WPM • {typeof feedback.fillerWordsCount === 'number' ? feedback.fillerWordsCount : 0} Fillers</span>
                         </div>
                     </div>
                 </div>
