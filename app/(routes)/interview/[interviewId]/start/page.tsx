@@ -61,6 +61,7 @@ type CandidateAnswerRecord = {
     question: string;
     answer: string;
     timestampSeconds: number;
+    questionIndex?: number;
 }
 
 export default function StartInterview() {
@@ -81,6 +82,12 @@ export default function StartInterview() {
     const [messages, setMessages] = useState<Messages[]>([]);
     const [userInputText, setUserInputText] = useState("");
     const [isListening, setIsListening] = useState(false);
+
+    // Answer State & Submission Protection
+    const [savedAnswers, setSavedAnswers] = useState<Record<number, string>>({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [evaluating, setEvaluating] = useState(false);
+    const [evalError, setEvalError] = useState<string | null>(null);
 
     // Recording & Upload States
     const [isRecording, setIsRecording] = useState(false);
@@ -655,94 +662,165 @@ export default function StartInterview() {
         }
     };
 
-    const handleSendAnswer = async (textToSend?: string) => {
-        const text = textToSend || userInputText;
-        if (!text.trim()) return;
-
-        if (isListeningRef.current) {
-            isListeningRef.current = false;
-            setIsListening(false);
-            if (recognitionRef.current) {
-                try { recognitionRef.current.stop(); } catch (e) {}
-            }
-        }
-
+    const navigateToQuestion = (targetIndex: number) => {
         const questionsList = interviewData?.interviewQuestions || [];
-        const currentQObj = questionsList[currentQuestionIndex];
-        const currentQText = currentQObj?.question || "";
+        if (targetIndex < 0 || targetIndex >= questionsList.length) return;
 
-        const answerRecord: CandidateAnswerRecord = {
-            question: currentQText,
-            answer: text,
-            timestampSeconds: recordingDuration
-        };
-
-        setCandidateAnswers(prev => [...prev, answerRecord]);
-
-        const updatedMessages: Messages[] = [
-            ...messages,
-            { from: 'user', text: text }
-        ];
-
-        setUserInputText("");
-
-        // Check if we should ask an adaptive follow-up
-        if (!followUpAsked) {
-            try {
-                const followUpRes = await axios.post('/api/generate-followup-question', {
-                    currentQuestion: currentQText,
-                    candidateAnswer: text,
-                    jobTitle: interviewData?.jobTitle,
-                    techStack: interviewData?.techStack,
-                    experienceLevel: interviewData?.experienceLevel,
-                    currentPhase: currentQuestionIndex + 1
-                });
-
-                if (followUpRes.data?.hasFollowUp && followUpRes.data?.followUpQuestion) {
-                    const followUpText = followUpRes.data.followUpQuestion;
-                    setFollowUpAsked(true);
-                    updatedMessages.push({ from: 'bot', text: followUpText, isFollowUp: true });
-                    setMessages(updatedMessages);
-                    speakText(followUpText);
-                    return;
+        // Auto-save any typed text in the current question if not yet submitted
+        if (userInputText.trim()) {
+            const currentQText = questionsList[currentQuestionIndex]?.question || `Question ${currentQuestionIndex + 1}`;
+            setSavedAnswers(prev => ({
+                ...prev,
+                [currentQuestionIndex]: userInputText.trim()
+            }));
+            setCandidateAnswers(prev => {
+                const next = [...prev];
+                const existingIdx = next.findIndex(ca => ca.questionIndex === currentQuestionIndex || ca.question === currentQText);
+                const rec: CandidateAnswerRecord = {
+                    question: currentQText,
+                    answer: userInputText.trim(),
+                    timestampSeconds: recordingDuration,
+                    questionIndex: currentQuestionIndex
+                };
+                if (existingIdx >= 0) {
+                    next[existingIdx] = rec;
+                } else {
+                    next.push(rec);
                 }
-            } catch (fErr) {
-                console.warn("Follow-up evaluation skipped:", fErr);
-            }
+                return next;
+            });
         }
 
-        // Progress to next question/phase
-        setFollowUpAsked(false);
-        const nextIdx = currentQuestionIndex + 1;
+        setCurrentQuestionIndex(targetIndex);
+        // Load target question's saved answer into input box
+        setUserInputText(savedAnswers[targetIndex] || "");
 
-        if (nextIdx < questionsList.length) {
-            const nextQ = questionsList[nextIdx].question;
-            setCurrentQuestionIndex(nextIdx);
+        const targetQ = questionsList[targetIndex];
+        if (joined && targetQ?.question) {
+            speakText(`Question ${targetIndex + 1}: ${targetQ.question}`);
+        }
+    };
 
-            setQuestionTimestamps(prev => [
-                ...prev,
-                {
-                    questionIndex: nextIdx,
-                    question: nextQ,
-                    timestampSeconds: recordingDuration,
-                    formattedTime: formatTime(recordingDuration)
+    const handleSendAnswer = async (textToSend?: string) => {
+        if (isSubmitting) return;
+        const text = (textToSend !== undefined ? textToSend : userInputText).trim();
+        if (!text) {
+            toast.warning("Please type or speak your answer before submitting, or click 'Skip Question' to advance.");
+            return;
+        }
+
+        setIsSubmitting(true);
+        try {
+            if (isListeningRef.current) {
+                isListeningRef.current = false;
+                setIsListening(false);
+                if (recognitionRef.current) {
+                    try { recognitionRef.current.stop(); } catch (e) {}
                 }
-            ]);
+            }
 
-            const botReply = `${nextQ}`;
-            updatedMessages.push({ from: 'bot', text: botReply });
-            setMessages(updatedMessages);
-            speakText(botReply);
+            const questionsList = interviewData?.interviewQuestions || [];
+            const currentQObj = questionsList[currentQuestionIndex];
+            const currentQText = currentQObj?.question || `Question ${currentQuestionIndex + 1}`;
+
+            // 1. Save in savedAnswers dictionary
+            const updatedSavedAnswers = {
+                ...savedAnswers,
+                [currentQuestionIndex]: text
+            };
+            setSavedAnswers(updatedSavedAnswers);
+
+            // 2. Save in candidateAnswers array
+            const answerRecord: CandidateAnswerRecord = {
+                question: currentQText,
+                answer: text,
+                timestampSeconds: recordingDuration,
+                questionIndex: currentQuestionIndex
+            };
+            setCandidateAnswers(prev => {
+                const next = [...prev];
+                const existingIdx = next.findIndex(ca => ca.questionIndex === currentQuestionIndex || ca.question === currentQText);
+                if (existingIdx >= 0) {
+                    next[existingIdx] = answerRecord;
+                } else {
+                    next.push(answerRecord);
+                }
+                return next;
+            });
+
+            // 3. Append to messages
+            const updatedMessages: Messages[] = [
+                ...messages,
+                { from: 'user', text: text }
+            ];
+
+            setUserInputText("");
+            toast.success(`Answer saved for Question ${currentQuestionIndex + 1}!`);
+
+            // 4. Progress directly to next question (Question 2 after Question 1!)
+            const nextIdx = currentQuestionIndex + 1;
+
+            if (nextIdx < questionsList.length) {
+                const nextQ = questionsList[nextIdx].question;
+                setCurrentQuestionIndex(nextIdx);
+
+                // Restore any answer user previously entered for next question
+                if (updatedSavedAnswers[nextIdx]) {
+                    setUserInputText(updatedSavedAnswers[nextIdx]);
+                }
+
+                setQuestionTimestamps(prev => [
+                    ...prev,
+                    {
+                        questionIndex: nextIdx,
+                        question: nextQ,
+                        timestampSeconds: recordingDuration,
+                        formattedTime: formatTime(recordingDuration)
+                    }
+                ]);
+
+                const botReply = `Question ${nextIdx + 1}: ${nextQ}`;
+                updatedMessages.push({ from: 'bot', text: botReply });
+                setMessages(updatedMessages);
+                speakText(botReply);
+            } else {
+                // All 8 questions completed
+                const endMsg = "All 8 questions have been completed! Click 'Finish Interview & Report' to view your performance evaluation.";
+                updatedMessages.push({ from: 'bot', text: endMsg });
+                setMessages(updatedMessages);
+                speakText(endMsg);
+                toast.success("All interview questions completed!");
+            }
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    const handleSkipQuestion = () => {
+        const questionsList = interviewData?.interviewQuestions || [];
+        const nextIdx = currentQuestionIndex + 1;
+        if (nextIdx < questionsList.length) {
+            toast.info(`Skipped Question ${currentQuestionIndex + 1}. Moving to Question ${nextIdx + 1}.`);
+            navigateToQuestion(nextIdx);
         } else {
-            const endMsg = "Thank you so much! That completes our technical and behavioral interview session. Click 'End Call' to generate your comprehensive performance feedback report.";
-            updatedMessages.push({ from: 'bot', text: endMsg });
-            setMessages(updatedMessages);
-            speakText(endMsg);
+            toast.info("This is the last question. You can complete the interview now.");
         }
     };
 
     const leaveConversation = async () => {
-        if (!window.confirm("Are you sure you want to end the interview and generate your performance report?")) return;
+        const questionsList = interviewData?.interviewQuestions || [];
+        const answeredCount = Object.keys(savedAnswers).filter(k => savedAnswers[Number(k)]?.trim()).length;
+        const totalCount = questionsList.length;
+
+        if (answeredCount < totalCount) {
+            const confirmed = window.confirm(
+                `You have answered ${answeredCount} of ${totalCount} questions.\n\nEnding now will mark this interview as INCOMPLETE. Unanswered questions will receive 0 points.\n\nAre you sure you want to end early?`
+            );
+            if (!confirmed) return;
+        } else {
+            const confirmed = window.confirm("Are you sure you want to complete the interview and generate your performance report?");
+            if (!confirmed) return;
+        }
 
         stopRecordingSession();
 
@@ -761,37 +839,60 @@ export default function StartInterview() {
     };
 
     const GenerateFeedback = async () => {
+        setEvaluating(true);
+        setEvalError(null);
         toast.info('Evaluating interview performance...');
+
         try {
+            const questionsList = interviewData?.interviewQuestions || [];
+
+            // Compile all answers mapped to their questions
+            const finalCandidateAnswers: CandidateAnswerRecord[] = questionsList.map((q, idx) => {
+                const ans = savedAnswers[idx] || candidateAnswers.find(ca => ca.questionIndex === idx || ca.question === q.question)?.answer || "";
+                return {
+                    question: q.question,
+                    answer: ans,
+                    timestampSeconds: recordingDuration,
+                    questionIndex: idx
+                };
+            }).filter(a => a.answer.trim().length > 0);
+
             const result = await axios.post('/api/interview-feedback', {
-                messages: messages.length > 0 ? messages : [
-                    { from: 'bot', text: 'Tell me about yourself.' },
-                    { from: 'user', text: 'I am a software engineer focused on building clean full-stack web applications.' }
-                ],
+                allQuestions: questionsList,
+                candidateAnswers: finalCandidateAnswers,
+                messages: messages,
                 jobTitle: interviewData?.jobTitle,
                 techStack: interviewData?.techStack,
-                candidateAnswers: candidateAnswers,
+                experienceLevel: interviewData?.experienceLevel,
                 durationSeconds: recordingDuration
             });
 
+            const feedbackData = result.data;
+            const isComplete = feedbackData.isComplete;
+            const status = isComplete ? 'complete' : 'incomplete';
+
             if (interviewId && updateFeedback) {
                 await updateFeedback({
-                    feedback: result.data,
+                    feedback: feedbackData,
                     recordId: interviewId as any,
                     durationSeconds: recordingDuration,
                     questionTimestamps: questionTimestamps,
-                    candidateAnswers: candidateAnswers,
-                    weakTopics: result.data.knowledgeGaps || [],
-                    recordingUrl: savedRecordingUrl || `idb://${interviewId}`
+                    candidateAnswers: finalCandidateAnswers,
+                    weakTopics: feedbackData.knowledgeGaps || [],
+                    status: status,
+                    ...(savedRecordingUrl ? { recordingUrl: savedRecordingUrl } : {})
                 });
             }
 
             toast.success('Performance evaluation complete!');
             router.replace(`/interview/${interviewId}/feedback`);
-        } catch (err) {
+        } catch (err: any) {
             console.error("Error saving feedback:", err);
-            toast.error("Redirecting to feedback page...");
-            router.replace(`/interview/${interviewId}/feedback`);
+            const msg = err.response?.data?.message || err.message || "Failed to evaluate interview.";
+            setEvalError(msg);
+            toast.error("AI Evaluation unavailable. Your responses have been saved. Click Retry to re-evaluate.");
+        } finally {
+            setEvaluating(false);
         }
     };
 
@@ -857,9 +958,20 @@ export default function StartInterview() {
                     ) : (
                         <Button
                             onClick={leaveConversation}
-                            className="bg-rose-600 hover:bg-rose-500 text-white font-semibold rounded-full shadow-md text-xs px-5 cursor-pointer"
+                            disabled={evaluating}
+                            className={`${
+                                Object.keys(savedAnswers).filter(k => savedAnswers[Number(k)]?.trim()).length >= questionsList.length
+                                    ? "bg-emerald-600 hover:bg-emerald-500"
+                                    : "bg-rose-600 hover:bg-rose-500"
+                            } text-white font-semibold rounded-full shadow-md text-xs px-5 cursor-pointer`}
                         >
-                            <PhoneOff className="w-4 h-4 mr-2" /> End Call
+                            {evaluating ? (
+                                <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Evaluating Performance...</>
+                            ) : Object.keys(savedAnswers).filter(k => savedAnswers[Number(k)]?.trim()).length >= questionsList.length ? (
+                                <><CheckCircle2 className="w-4 h-4 mr-2" /> Finish Interview & Report</>
+                            ) : (
+                                <><PhoneOff className="w-4 h-4 mr-2" /> End Call (Exit Early)</>
+                            )}
                         </Button>
                     )}
                 </div>
@@ -954,27 +1066,28 @@ export default function StartInterview() {
                 {/* LEFT SIDE: Question Nav & Active Question (7 cols) */}
                 <div className="lg:col-span-7 space-y-6 flex flex-col">
                     <div className="flex items-center gap-2 overflow-x-auto pb-1">
-                        {questionsList.map((q, idx) => (
-                            <button
-                                key={idx}
-                                onClick={() => {
-                                    setCurrentQuestionIndex(idx);
-                                    if (q?.question) {
-                                        speakText(`Question ${idx + 1}: ${q.question}`);
-                                    }
-                                }}
-                                className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
-                                    idx === currentQuestionIndex
-                                        ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                                        : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
-                                }`}
-                            >
-                                <span>Question {idx + 1}</span>
-                                {bookmarkedIndices.includes(idx) && (
-                                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                                )}
-                            </button>
-                        ))}
+                        {questionsList.map((q, idx) => {
+                            const isAnswered = Boolean(savedAnswers[idx]?.trim());
+                            return (
+                                <button
+                                    key={idx}
+                                    onClick={() => navigateToQuestion(idx)}
+                                    className={`px-4 py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 ${
+                                        idx === currentQuestionIndex
+                                            ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
+                                            : isAnswered
+                                            ? "bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                                            : "bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100"
+                                    }`}
+                                >
+                                    <span>Question {idx + 1}</span>
+                                    {isAnswered && <CheckCircle2 className="w-3 h-3 text-emerald-500" />}
+                                    {bookmarkedIndices.includes(idx) && (
+                                        <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+                                    )}
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-sm space-y-5 flex-1 flex flex-col justify-between">
@@ -1040,15 +1153,8 @@ export default function StartInterview() {
                                 size="sm"
                                 variant="ghost"
                                 disabled={currentQuestionIndex === 0}
-                                onClick={() => {
-                                    const prevIdx = Math.max(0, currentQuestionIndex - 1);
-                                    setCurrentQuestionIndex(prevIdx);
-                                    const q = questionsList[prevIdx];
-                                    if (q?.question) {
-                                        speakText(`Question ${prevIdx + 1}: ${q.question}`);
-                                    }
-                                }}
-                                className="text-xs"
+                                onClick={() => navigateToQuestion(currentQuestionIndex - 1)}
+                                className="text-xs cursor-pointer"
                             >
                                 Previous Question
                             </Button>
@@ -1056,15 +1162,8 @@ export default function StartInterview() {
                                 size="sm"
                                 variant="outline"
                                 disabled={currentQuestionIndex === questionsList.length - 1}
-                                onClick={() => {
-                                    const nextIdx = Math.min(questionsList.length - 1, currentQuestionIndex + 1);
-                                    setCurrentQuestionIndex(nextIdx);
-                                    const q = questionsList[nextIdx];
-                                    if (q?.question) {
-                                        speakText(`Question ${nextIdx + 1}: ${q.question}`);
-                                    }
-                                }}
-                                className="text-xs rounded-full"
+                                onClick={() => navigateToQuestion(currentQuestionIndex + 1)}
+                                className="text-xs rounded-full cursor-pointer"
                             >
                                 Next Question
                             </Button>
@@ -1183,6 +1282,24 @@ export default function StartInterview() {
                             )}
                         </div>
 
+                        {evalError && (
+                            <div className="mb-2 p-3 bg-rose-50 dark:bg-rose-950/60 border border-rose-200 dark:border-rose-800 rounded-2xl flex items-center justify-between text-xs text-rose-700 dark:text-rose-300">
+                                <div className="flex items-center gap-2">
+                                    <AlertCircle className="w-4 h-4 text-rose-500 shrink-0" />
+                                    <span className="line-clamp-1">AI Evaluation unavailable. Your responses have been preserved.</span>
+                                </div>
+                                <Button
+                                    size="sm"
+                                    onClick={() => GenerateFeedback()}
+                                    disabled={evaluating}
+                                    className="h-7 text-xs bg-rose-600 hover:bg-rose-500 text-white rounded-xl shrink-0 cursor-pointer"
+                                >
+                                    {evaluating ? <Loader2 className="w-3.5 h-3.5 animate-spin mr-1" /> : <RotateCcw className="w-3.5 h-3.5 mr-1" />}
+                                    Retry Evaluation
+                                </Button>
+                            </div>
+                        )}
+
                         {joined && (
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
@@ -1199,15 +1316,40 @@ export default function StartInterview() {
                                         {isListening ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
                                     </Button>
                                     <Input
-                                        placeholder="Type or edit speech transcript here..."
+                                        placeholder="Type or edit your response here..."
                                         value={userInputText}
                                         onChange={(e) => setUserInputText(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleSendAnswer()}
+                                        onKeyDown={(e) => {
+                                            if (e.key === 'Enter' && !e.shiftKey) {
+                                                e.preventDefault();
+                                                handleSendAnswer();
+                                            }
+                                        }}
+                                        disabled={isSubmitting}
                                         className="text-xs rounded-xl h-9"
                                     />
-                                    <Button size="sm" onClick={() => handleSendAnswer()} className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-9 px-3 cursor-pointer">
-                                        <Send className="w-3.5 h-3.5" />
+                                    <Button
+                                        size="sm"
+                                        onClick={() => handleSendAnswer()}
+                                        disabled={isSubmitting}
+                                        className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl h-9 px-3 cursor-pointer"
+                                        title="Submit Answer"
+                                    >
+                                        {isSubmitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
                                     </Button>
+                                </div>
+                                <div className="flex items-center justify-between text-[11px] pt-1 px-1 text-slate-400">
+                                    <button
+                                        type="button"
+                                        onClick={handleSkipQuestion}
+                                        disabled={currentQuestionIndex >= questionsList.length - 1}
+                                        className="hover:text-slate-600 dark:hover:text-slate-200 transition underline cursor-pointer disabled:opacity-40"
+                                    >
+                                        Skip this question
+                                    </button>
+                                    <span>
+                                        {savedAnswers[currentQuestionIndex]?.trim() ? "✓ Answer saved" : "Unanswered"}
+                                    </span>
                                 </div>
                             </div>
                         )}

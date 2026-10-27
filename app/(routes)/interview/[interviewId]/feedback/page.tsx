@@ -1,12 +1,31 @@
 "use client"
 import { api } from '@/convex/_generated/api';
 import { useMutation, useQuery } from 'convex/react';
-import { ArrowLeft, Award, CheckCircle2, RotateCcw, Sparkles, Star, TrendingUp, AlertTriangle, ChevronDown, ChevronUp, UserCheck, MessageSquare, Mic, FileText, Check, Printer, Download, Copy, CopyCheck, Activity, Eye, Smile, Flame, ShieldAlert, Target, PlayCircle } from 'lucide-react';
+import {
+    ArrowLeft,
+    CheckCircle2,
+    Sparkles,
+    Star,
+    TrendingUp,
+    AlertTriangle,
+    ChevronDown,
+    ChevronUp,
+    UserCheck,
+    Mic,
+    Printer,
+    Check,
+    Copy,
+    CopyCheck,
+    Activity,
+    Eye,
+    Smile,
+    Target,
+    PlayCircle
+} from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 import React, { useContext, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import RadarChart from './_components/RadarChart';
 import axios from 'axios';
@@ -50,7 +69,7 @@ export default function InterviewFeedbackPage() {
             return;
         }
 
-        const weakTopics = record?.weakTopics || feedbackData.knowledgeGaps || [];
+        const weakTopics = record?.weakTopics || record?.feedback?.knowledgeGaps || [];
         const role = record?.jobTitle || "Technical Developer";
         const tech = record?.techStack || "Software Engineering";
 
@@ -93,38 +112,43 @@ export default function InterviewFeedbackPage() {
         }
     };
 
-    const feedbackData = record?.feedback || {
-        feedback: "Great job completing your mock interview session! You demonstrated solid fundamental technical concepts and good communication.",
-        rating: 8.2,
-        technicalCorrectness: 8,
-        relevance: 9,
-        problemSolving: 8,
-        communication: 8,
-        completeness: 8,
-        fillerWordsCount: 2,
-        speechClarity: "Excellent communication flow with minimal verbal fillers.",
-        demonstratedSkills: [
-            "Technical Framework Architecture",
-            "System Decomposition & Logic",
-            "REST API Design Principles",
-            "Structured Verbal Communication"
-        ],
-        knowledgeGaps: [
-            "Elaborate with specific quantitative benchmarks for past project accomplishments.",
-            "Detail trade-off choices between alternative design patterns."
-        ],
-        suggestions: [
-            "Use the STAR (Situation, Task, Action, Result) methodology when explaining past project decisions.",
-            "Mention concrete benchmarks or unit testing approaches during technical answers.",
-            "Pause briefly to structure thoughts before speaking to reduce verbal fillers."
-        ],
-        modelAnswers: [
-            {
-                question: "Technical Background & Framework Architecture",
-                starAnswer: "SITUATION: Led system optimization for a high-traffic web application.\nTASK: Reduce latency and clean up component state logic.\nACTION: Refactored state handling, implemented caching layers, and decoupled API routes.\nRESULT: Improved response times by 35% with 100% test coverage."
-            }
-        ]
-    };
+    if (record === undefined) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-3">
+                <Sparkles className="w-8 h-8 animate-spin text-indigo-600" />
+                <p className="text-xs text-slate-500 font-semibold">Loading performance report...</p>
+            </div>
+        );
+    }
+
+    if (!record || !record.feedback) {
+        return (
+            <div className="max-w-4xl mx-auto py-16 px-4 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-600 flex items-center justify-center mx-auto">
+                    <AlertTriangle className="w-8 h-8" />
+                </div>
+                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Performance Evaluation Unavailable</h2>
+                <p className="text-sm text-slate-500 max-w-md mx-auto">
+                    This interview session does not have an evaluated performance report yet or the evaluation failed.
+                </p>
+                <div className="pt-2 flex justify-center gap-3">
+                    <Link href={`/interview/${interviewId}/start`}>
+                        <Button className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full text-xs font-semibold cursor-pointer">
+                            Resume / Retake Interview
+                        </Button>
+                    </Link>
+                    <Link href="/dashboard">
+                        <Button variant="outline" className="rounded-full text-xs font-semibold cursor-pointer">
+                            Back to Dashboard
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    const feedbackData = record.feedback;
+    const isIncomplete = record?.status === 'incomplete' || feedbackData.isComplete === false;
 
     let questionsList: any[] = [];
     if (Array.isArray(record?.interviewQuestions)) {
@@ -138,12 +162,15 @@ export default function InterviewFeedbackPage() {
         }
     }
 
-    const rating = feedbackData.rating || 8.2;
-    const techScore = feedbackData.technicalCorrectness || 8;
-    const relevanceScore = feedbackData.relevance || 9;
-    const problemScore = feedbackData.problemSolving || 8;
-    const commScore = feedbackData.communication || 8;
-    const completenessScore = feedbackData.completeness || 8;
+    const answeredCount = feedbackData.answeredCount ?? (record?.candidateAnswers?.length || 0);
+    const totalQuestionsCount = questionsList.length || feedbackData.totalQuestions || 8;
+
+    const rating = typeof feedbackData.rating === 'number' ? feedbackData.rating : 0;
+    const techScore = typeof feedbackData.technicalCorrectness === 'number' ? feedbackData.technicalCorrectness : 0;
+    const relevanceScore = typeof feedbackData.relevance === 'number' ? feedbackData.relevance : 0;
+    const problemScore = typeof feedbackData.problemSolving === 'number' ? feedbackData.problemSolving : 0;
+    const commScore = typeof feedbackData.communication === 'number' ? feedbackData.communication : 0;
+    const completenessScore = typeof feedbackData.completeness === 'number' ? feedbackData.completeness : 0;
 
     const metrics = [
         { label: "Technical Correctness", score: techScore, color: "bg-indigo-600" },
@@ -160,9 +187,15 @@ export default function InterviewFeedbackPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-200 dark:border-slate-800 pb-5">
                 <div>
-                    <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-                        <CheckCircle2 className="w-4 h-4" /> Interview Completed
-                    </span>
+                    {isIncomplete ? (
+                        <span className="text-xs font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 flex items-center gap-1.5 bg-amber-50 dark:bg-amber-950/60 px-3 py-1 rounded-full border border-amber-200 dark:border-amber-800 w-fit">
+                            <AlertTriangle className="w-4 h-4 text-amber-500" /> Incomplete Interview ({answeredCount} of {totalQuestionsCount} Questions Answered)
+                        </span>
+                    ) : (
+                        <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/60 px-3 py-1 rounded-full border border-emerald-200 dark:border-emerald-800 w-fit">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-500" /> Interview Completed (All {totalQuestionsCount} Questions)
+                        </span>
+                    )}
                     <h1 className="text-2xl md:text-3xl font-extrabold text-slate-900 dark:text-white mt-1">
                         AI Performance Report: {record?.jobTitle || "Technical Interview"}
                     </h1>
@@ -198,11 +231,31 @@ export default function InterviewFeedbackPage() {
                 </div>
             </div>
 
+            {/* Incomplete Interview Notice Banner */}
+            {isIncomplete && (
+                <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-2xl p-4 flex items-start gap-3">
+                    <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                    <div className="space-y-0.5 text-xs text-amber-800 dark:text-amber-200">
+                        <span className="font-bold block">Incomplete Interview Notice</span>
+                        <p className="leading-relaxed">
+                            This interview was ended early after answering {answeredCount} of {totalQuestionsCount} questions. Unanswered questions are marked as &ldquo;Not answered&rdquo; and received 0 points. Evaluated metrics reflect only the candidate&apos;s actual submitted answers.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Top Rating Banner & 5-Metric Radar Chart */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {/* Overall Practice Score Card */}
                 <div className="md:col-span-1 bg-gradient-to-br from-indigo-600 via-indigo-700 to-purple-700 text-white p-6 rounded-3xl shadow-xl flex flex-col justify-between space-y-3">
-                    <span className="text-xs font-bold uppercase tracking-wider text-indigo-200">Overall Score</span>
+                    <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold uppercase tracking-wider text-indigo-200">Overall Score</span>
+                        {isIncomplete && (
+                            <span className="text-[10px] font-bold bg-amber-400/20 text-amber-300 border border-amber-400/30 px-2 py-0.5 rounded-full">
+                                Incomplete
+                            </span>
+                        )}
+                    </div>
                     <div className="space-y-1">
                         <div className="flex items-baseline gap-1">
                             <span className="text-5xl font-extrabold">{rating}</span>
@@ -215,7 +268,7 @@ export default function InterviewFeedbackPage() {
                         </div>
                     </div>
                     <div className="text-[10px] text-indigo-200 font-mono leading-tight bg-black/20 p-2 rounded-xl">
-                        Weighted Formula: (Tech*35%) + (Prob*25%) + (Rel*15%) + (Comp*15%) + (Comm*10%)
+                        Weighted Formula: (Tech*35%) + (Rel*25%) + (Prob*15%) + (Comm*15%) + (Comp*10%)
                     </div>
                 </div>
 
@@ -241,7 +294,7 @@ export default function InterviewFeedbackPage() {
                                     <div className="w-full h-2 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
                                         <div
                                             className={`h-full rounded-full ${m.color} transition-all duration-500`}
-                                            style={{ width: `${(m.score / 10) * 100}%` }}
+                                            style={{ width: `${Math.max(0, Math.min(100, (m.score / 10) * 100))}%` }}
                                         />
                                     </div>
                                 </div>
@@ -274,7 +327,7 @@ export default function InterviewFeedbackPage() {
                                 {feedbackData.fillerWordsCount || 0}
                             </div>
                             <div className="text-[11px] text-slate-500 mt-1">
-                                Words ("um", "uh", "like", "basically")
+                                Words (&quot;um&quot;, &quot;uh&quot;, &quot;like&quot;, &quot;basically&quot;)
                             </div>
                         </div>
                     </div>
@@ -286,7 +339,7 @@ export default function InterviewFeedbackPage() {
                         </div>
                         <div>
                             <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                                {feedbackData.speechPaceWpm || 135} <span className="text-xs font-normal text-slate-400">WPM</span>
+                                {feedbackData.speechPaceWpm || 0} <span className="text-xs font-normal text-slate-400">WPM</span>
                             </div>
                             <div className="text-[11px] text-slate-500 mt-1">
                                 Ideal range: 120–160 WPM
@@ -301,7 +354,7 @@ export default function InterviewFeedbackPage() {
                         </div>
                         <div>
                             <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                                {feedbackData.facialExpressions?.eyeContactPercentage || 92}%
+                                {feedbackData.facialExpressions?.eyeContactPercentage || 0}%
                             </div>
                             <div className="text-[11px] text-slate-500 mt-1">
                                 Head Posture: Centered
@@ -311,15 +364,15 @@ export default function InterviewFeedbackPage() {
 
                     <div className="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800/70 space-y-2 flex flex-col justify-between">
                         <div className="flex items-center justify-between">
-                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Composure Score</span>
+                            <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Confidence Score</span>
                             <Smile className="w-4 h-4 text-amber-500" />
                         </div>
                         <div>
                             <div className="text-2xl font-extrabold text-slate-900 dark:text-white">
-                                {feedbackData.confidenceScore || 8.5} / 10
+                                {feedbackData.confidenceScore || 0} / 10
                             </div>
                             <div className="text-[11px] text-slate-500 mt-1">
-                                Steady speech delivery
+                                Speech composure evaluation
                             </div>
                         </div>
                     </div>
@@ -371,7 +424,7 @@ export default function InterviewFeedbackPage() {
                 <h3 className="font-bold text-slate-900 dark:text-white text-base flex items-center justify-between">
                     <span className="flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-indigo-500" />
-                        Evidence-Based Question Breakdown ({questionsList.length})
+                        Evidence-Based Question Breakdown ({questionsList.length} Questions)
                     </span>
                     <span className="text-xs text-slate-400 font-normal">Grounded in Candidate Transcript</span>
                 </h3>
@@ -379,35 +432,136 @@ export default function InterviewFeedbackPage() {
                 <div className="space-y-3 pt-2">
                     {questionsList.map((item: any, idx: number) => {
                         const isOpen = openQuestionIndex === idx;
-                        const evalItem = answerEvaluations[idx];
+                        const evalItem = answerEvaluations[idx] || answerEvaluations.find((e: any) => e.questionIndex === idx + 1);
+                        const isAnswered = evalItem?.isAnswered ?? false;
 
                         return (
                             <div
                                 key={idx}
-                                className="border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden transition-all"
+                                className={`border rounded-2xl overflow-hidden transition-all ${
+                                    isAnswered ? "border-slate-200 dark:border-slate-800" : "border-amber-200 dark:border-amber-900/60"
+                                }`}
                             >
                                 <button
                                     onClick={() => setOpenQuestionIndex(isOpen ? null : idx)}
                                     className="w-full flex items-center justify-between p-4 text-left bg-slate-50/80 dark:bg-slate-950/60 hover:bg-slate-100 transition cursor-pointer"
                                 >
-                                    <span className="font-bold text-xs text-slate-900 dark:text-white flex items-center gap-2">
-                                        <span className="w-6 h-6 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-[11px]">
+                                    <div className="flex items-center gap-3">
+                                        <span className={`w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold ${
+                                            isAnswered
+                                                ? "bg-indigo-100 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-400"
+                                                : "bg-slate-200 dark:bg-slate-800 text-slate-500"
+                                        }`}>
                                             Q{idx + 1}
                                         </span>
-                                        {item.question}
-                                    </span>
-                                    {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-slate-400 shrink-0" />}
+                                        <div>
+                                            <span className="font-bold text-xs text-slate-900 dark:text-white block">
+                                                {item.question}
+                                            </span>
+                                            <span className="text-[10px] text-slate-500">
+                                                {item.category || `Phase ${idx + 1}`}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div className="flex items-center gap-3 shrink-0">
+                                        {isAnswered ? (
+                                            <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-50 dark:bg-indigo-950/80 text-indigo-600 dark:text-indigo-400 border border-indigo-200/50">
+                                                Score: {evalItem?.questionScore ?? 0}/10
+                                            </span>
+                                        ) : (
+                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-500 border border-slate-200 dark:border-slate-700">
+                                                Not answered (0/10)
+                                            </span>
+                                        )}
+                                        {isOpen ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                                    </div>
                                 </button>
 
                                 {isOpen && (
                                     <div className="p-4 space-y-4 bg-white dark:bg-slate-900 text-xs border-t border-slate-200/60 dark:border-slate-800/60">
-                                        {/* Grounded Evidence Quote */}
-                                        {evalItem?.evidenceQuote && (
-                                            <div className="p-3 bg-indigo-50/60 dark:bg-indigo-950/40 rounded-xl border border-indigo-200/50 space-y-1">
-                                                <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase text-[10px]">Candidate Transcript Evidence</span>
-                                                <p className="text-slate-800 dark:text-slate-200 italic">"{evalItem.evidenceQuote}"</p>
+                                        {/* Candidate Transcript Evidence */}
+                                        <div className={`p-3 rounded-xl border space-y-1 ${
+                                            isAnswered
+                                                ? "bg-indigo-50/60 dark:bg-indigo-950/40 border-indigo-200/50"
+                                                : "bg-slate-50 dark:bg-slate-950/60 border-slate-200/60"
+                                        }`}>
+                                            <div className="flex items-center justify-between">
+                                                <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase text-[10px]">
+                                                    Candidate Transcript Response
+                                                </span>
+                                                <span className="text-[10px] text-slate-500">
+                                                    {isAnswered ? `${evalItem?.wordCount || 0} words` : "Unanswered"}
+                                                </span>
+                                            </div>
+                                            <p className="text-slate-800 dark:text-slate-200 italic">
+                                                {isAnswered ? `"${evalItem?.userAnswer || evalItem?.evidenceQuote}"` : "No answer provided for this question."}
+                                            </p>
+                                        </div>
+
+                                        {/* Individual Question Metric Breakdown if answered */}
+                                        {isAnswered && (
+                                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 p-3 bg-slate-50 dark:bg-slate-950/60 rounded-xl border border-slate-200/50 text-[11px]">
+                                                <div>
+                                                    <span className="text-slate-500 block text-[10px]">Tech (35%)</span>
+                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.technicalScore}/10</strong>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500 block text-[10px]">Relevance (25%)</span>
+                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.relevanceScore}/10</strong>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500 block text-[10px]">Problem (15%)</span>
+                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.problemSolvingScore}/10</strong>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500 block text-[10px]">Comm (15%)</span>
+                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.communicationScore}/10</strong>
+                                                </div>
+                                                <div>
+                                                    <span className="text-slate-500 block text-[10px]">Complete (10%)</span>
+                                                    <strong className="text-slate-800 dark:text-slate-200">{evalItem?.completenessScore}/10</strong>
+                                                </div>
                                             </div>
                                         )}
+
+                                        {/* Strengths & Missing Concepts */}
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <div className="space-y-1">
+                                                <span className="font-bold text-emerald-600 dark:text-emerald-400 uppercase text-[10px] tracking-wider">
+                                                    Strengths Demonstrated
+                                                </span>
+                                                <ul className="space-y-1 text-slate-700 dark:text-slate-300">
+                                                    {evalItem?.doneWell && evalItem.doneWell.length > 0 ? (
+                                                        evalItem.doneWell.map((dw: string, dIdx: number) => (
+                                                            <li key={dIdx} className="flex items-start gap-1.5">
+                                                                <span className="text-emerald-500 shrink-0">✓</span>
+                                                                <span>{dw}</span>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="text-slate-400 italic">No specific strengths demonstrated for this question.</li>
+                                                    )}
+                                                </ul>
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <span className="font-bold text-amber-600 dark:text-amber-400 uppercase text-[10px] tracking-wider">
+                                                    Missing Concepts & Weaknesses
+                                                </span>
+                                                <ul className="space-y-1 text-slate-700 dark:text-slate-300">
+                                                    {evalItem?.missingConcepts && evalItem.missingConcepts.length > 0 ? (
+                                                        evalItem.missingConcepts.map((mc: string, mIdx: number) => (
+                                                            <li key={mIdx} className="flex items-start gap-1.5">
+                                                                <span className="text-amber-500 shrink-0">•</span>
+                                                                <span>{mc}</span>
+                                                            </li>
+                                                        ))
+                                                    ) : (
+                                                        <li className="text-slate-400 italic">None noted.</li>
+                                                    )}
+                                                </ul>
+                                            </div>
+                                        </div>
 
                                         {item.answer && (
                                             <div className="space-y-1">
@@ -427,14 +581,14 @@ export default function InterviewFeedbackPage() {
                                                     <Check className="w-3 h-3" /> Suggested STAR Model Answer Structure
                                                 </span>
                                                 <button
-                                                    onClick={() => copyText(feedbackData.modelAnswers?.[0]?.starAnswer || "SITUATION: Working on a complex system module.\nTASK: Deliver a robust technical implementation.\nACTION: Analyzed requirements, applied design patterns, and wrote clean unit tests.\nRESULT: Successfully deployed with high performance and stability.", idx)}
+                                                    onClick={() => copyText(evalItem?.betterStarAnswer || "SITUATION: Working on technical requirements.\nTASK: Implement clean solution.\nACTION: Applied patterns and tests.\nRESULT: High performance.", idx)}
                                                     className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 hover:underline flex items-center gap-1 cursor-pointer"
                                                 >
                                                     {copiedIndex === idx ? <><CopyCheck className="w-3 h-3 text-emerald-500" /> Copied!</> : <><Copy className="w-3 h-3" /> Copy Answer</>}
                                                 </button>
                                             </div>
                                             <div className="p-3 bg-emerald-50/50 dark:bg-emerald-950/30 rounded-xl border border-emerald-200/50 text-slate-800 dark:text-slate-200 leading-relaxed whitespace-pre-line font-mono text-[11px]">
-                                                {feedbackData.modelAnswers?.[0]?.starAnswer || "SITUATION: Working on a complex system module.\nTASK: Deliver a robust technical implementation.\nACTION: Analyzed requirements, applied design patterns, and wrote clean unit tests.\nRESULT: Successfully deployed with high performance and stability."}
+                                                {evalItem?.betterStarAnswer || "SITUATION: Working on technical requirements.\nTASK: Implement clean solution.\nACTION: Applied patterns and tests.\nRESULT: High performance."}
                                             </div>
                                         </div>
                                     </div>

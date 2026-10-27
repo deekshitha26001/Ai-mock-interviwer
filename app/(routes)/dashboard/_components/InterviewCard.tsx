@@ -71,6 +71,8 @@ function InterviewCard({ interviewInfo, onDeleteSuccess }: Props) {
         : 'Recent';
 
     const isCompleted = interviewInfo.status === 'complete';
+    const isIncomplete = interviewInfo.status === 'incomplete';
+    const hasFeedback = Boolean(interviewInfo.feedback);
     const rating = interviewInfo.feedback?.rating;
 
     let questionsList: any[] = [];
@@ -106,9 +108,15 @@ function InterviewCard({ interviewInfo, onDeleteSuccess }: Props) {
                         <Badge variant={isCompleted ? "default" : "secondary"} className={
                             isCompleted
                                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-[10px]"
-                                : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px]"
+                                : isIncomplete
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 text-[10px]"
+                                : "bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20 text-[10px]"
                         }>
-                            {isCompleted ? "Completed" : "Draft"}
+                            {isCompleted
+                                ? "Completed"
+                                : isIncomplete
+                                ? `Incomplete (${interviewInfo.feedback?.answeredCount ?? candidateAnswers.length}/${questionsList.length || 8})`
+                                : "Draft"}
                         </Badge>
                         <Button
                             size="icon"
@@ -147,7 +155,7 @@ function InterviewCard({ interviewInfo, onDeleteSuccess }: Props) {
             <div className="pt-2 flex flex-wrap items-center justify-between gap-1.5 border-t border-slate-100 dark:border-slate-800">
                 <div className="flex items-center gap-1 flex-wrap">
                     {/* View Report */}
-                    {isCompleted && (
+                    {(isCompleted || isIncomplete || hasFeedback) && (
                         <Link href={`/interview/${interviewInfo._id}/feedback`}>
                             <Button size="sm" variant="outline" className="text-[11px] h-7 px-2.5 rounded-xl border-slate-200 text-slate-700 dark:text-slate-300">
                                 <FileText className="w-3 h-3 mr-1 text-indigo-500" /> Report
@@ -156,10 +164,10 @@ function InterviewCard({ interviewInfo, onDeleteSuccess }: Props) {
                     )}
 
                     {/* Watch Recording */}
-                    {isCompleted && (
+                    {(isCompleted || isIncomplete || interviewInfo.recordingUrl) && (
                         <Link href={`/interview/${interviewInfo._id}/playback`}>
                             <Button size="sm" variant="outline" className="text-[11px] h-7 px-2.5 rounded-xl border-slate-200 text-slate-700 dark:text-slate-300">
-                                <PlayCircle className="w-3 h-3 mr-1 text-rose-500" /> Watch
+                                <PlayCircle className="w-4 h-4 mr-1 text-rose-500" /> Watch
                             </Button>
                         </Link>
                     )}

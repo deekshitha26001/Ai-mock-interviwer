@@ -31,14 +31,40 @@ export default function InterviewPlaybackPage() {
         interviewId ? { interviewRecordId: interviewId as any } : "skip"
     );
 
+    // Candidate Convex storageId for fallback resolution
+    const candidateStorageId = record?.recordingId || (
+        record?.recordingUrl && !record.recordingUrl.startsWith("http://") && !record.recordingUrl.startsWith("https://") && !record.recordingUrl.startsWith("idb:")
+            ? record.recordingUrl
+            : undefined
+    );
+
+    // Direct reactive query to resolve storageId URL from Convex if needed
+    const cloudResolvedUrl = useQuery(
+        api.Interview.GetRecordingUrl,
+        candidateStorageId ? { storageId: candidateStorageId } : "skip"
+    );
+
     // Load recorded video blob or persistent URL
     useEffect(() => {
         let isMounted = true;
         async function loadRecording() {
             if (!interviewId) return;
+            if (record === undefined) {
+                // Session data is still loading from Convex
+                setLoadingVideo(true);
+                return;
+            }
+
             setLoadingVideo(true);
             try {
-                const url = await getRecordingPlaybackUrl(interviewId as string, record?.recordingUrl);
+                let candidateUrl = record?.recordingUrl;
+                if (!candidateUrl || (!candidateUrl.startsWith("http://") && !candidateUrl.startsWith("https://"))) {
+                    if (cloudResolvedUrl) {
+                        candidateUrl = cloudResolvedUrl;
+                    }
+                }
+
+                const url = await getRecordingPlaybackUrl(interviewId as string, candidateUrl);
                 if (isMounted) {
                     setVideoSrc(url);
                 }
@@ -54,7 +80,7 @@ export default function InterviewPlaybackPage() {
         return () => {
             isMounted = false;
         };
-    }, [interviewId, record?.recordingUrl]);
+    }, [interviewId, record?.recordingUrl, cloudResolvedUrl, record === undefined]);
 
     const handleTimeUpdate = () => {
         if (videoRef.current) {

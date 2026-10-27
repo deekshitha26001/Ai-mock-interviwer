@@ -33,12 +33,18 @@ export default function ProgressAnalytics({ interviewList }: Props) {
         date: item._creationTime ? new Date(item._creationTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : `Session ${idx + 1}`
     }));
 
-    // Calculate skill trends across core categories
+    // Calculate skill trends dynamically across real session evaluations
+    const validCount = completedList.length || 1;
+    const avgTech = Number((completedList.reduce((acc, curr) => acc + (curr.feedback?.technicalCorrectness || 0), 0) / validCount).toFixed(1));
+    const avgProb = Number((completedList.reduce((acc, curr) => acc + (curr.feedback?.problemSolving || 0), 0) / validCount).toFixed(1));
+    const avgComm = Number((completedList.reduce((acc, curr) => acc + (curr.feedback?.communication || 0), 0) / validCount).toFixed(1));
+    const avgRel = Number((completedList.reduce((acc, curr) => acc + (curr.feedback?.relevance || 0), 0) / validCount).toFixed(1));
+
     const skillCategories = [
-        { name: "Technical Accuracy", score: 8.2, color: "bg-indigo-600" },
-        { name: "Problem Solving", score: 7.8, color: "bg-purple-600" },
-        { name: "Communication & Delivery", score: 8.5, color: "bg-emerald-600" },
-        { name: "Relevance & Completeness", score: 8.4, color: "bg-amber-500" }
+        { name: "Technical Accuracy", score: avgTech, color: "bg-indigo-600" },
+        { name: "Problem Solving", score: avgProb, color: "bg-purple-600" },
+        { name: "Communication & Delivery", score: avgComm, color: "bg-emerald-600" },
+        { name: "Relevance & Completeness", score: avgRel, color: "bg-amber-500" }
     ];
 
     const maxScore = 10;

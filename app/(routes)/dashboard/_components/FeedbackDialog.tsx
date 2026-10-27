@@ -15,9 +15,21 @@ type Props = {
 }
 
 export type FeedbackInfo = {
-    feedback: string,
-    rating: number,
-    suggestions: string[]
+    feedback: string;
+    rating: number;
+    suggestions: string[];
+    technicalCorrectness?: number;
+    relevance?: number;
+    problemSolving?: number;
+    communication?: number;
+    completeness?: number;
+    answeredCount?: number;
+    totalQuestions?: number;
+    isComplete?: boolean;
+    status?: string;
+    knowledgeGaps?: string[];
+    demonstratedSkills?: string[];
+    answerEvaluations?: any[];
 }
 
 function FeedbackDialog({ feedbackInfo }: Props) {

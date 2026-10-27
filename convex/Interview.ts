@@ -47,11 +47,14 @@ export const GetInterviewQuestions = query({
             return null;
         }
 
-        // Resolve Convex Cloud Storage HTTPS URL if recordingId exists
+        // Resolve Convex Cloud Storage HTTPS URL if recordingId or storageId exists
         let resolvedRecordingUrl = record.recordingUrl;
-        if (record.recordingId) {
+        const candidateStorageId = record.recordingId || 
+            (record.recordingUrl && !record.recordingUrl.startsWith("http://") && !record.recordingUrl.startsWith("https://") && !record.recordingUrl.startsWith("idb:") ? record.recordingUrl : null);
+
+        if (candidateStorageId) {
             try {
-                const cloudUrl = await ctx.storage.getUrl(record.recordingId as any);
+                const cloudUrl = await ctx.storage.getUrl(candidateStorageId as any);
                 if (cloudUrl) {
                     resolvedRecordingUrl = cloudUrl;
                 }
@@ -76,7 +79,8 @@ export const UpdateFeedback = mutation({
         candidateAnswers: v.optional(v.any()),
         weakTopics: v.optional(v.any()),
         recordingUrl: v.optional(v.string()),
-        uid: v.optional(v.id('UserTable'))
+        uid: v.optional(v.id('UserTable')),
+        status: v.optional(v.string())
     },
     handler: async (ctx, args) => {
         const existing = await ctx.db.get(args.recordId);
@@ -90,14 +94,20 @@ export const UpdateFeedback = mutation({
 
         const patchData: any = {
             feedback: args.feedback,
-            status: 'complete'
+            status: args.status || 'complete'
         };
 
         if (args.durationSeconds !== undefined) patchData.durationSeconds = args.durationSeconds;
         if (args.questionTimestamps !== undefined) patchData.questionTimestamps = args.questionTimestamps;
         if (args.candidateAnswers !== undefined) patchData.candidateAnswers = args.candidateAnswers;
         if (args.weakTopics !== undefined) patchData.weakTopics = args.weakTopics;
-        if (args.recordingUrl !== undefined) patchData.recordingUrl = args.recordingUrl;
+        if (args.recordingUrl !== undefined) {
+            const isIdbFallback = args.recordingUrl.startsWith("idb:");
+            const existingHasCloud = existing.recordingUrl && (existing.recordingUrl.startsWith("http://") || existing.recordingUrl.startsWith("https://") || existing.recordingId);
+            if (!existingHasCloud || !isIdbFallback) {
+                patchData.recordingUrl = args.recordingUrl;
+            }
+        }
 
         const result = await ctx.db.patch(args.recordId, patchData);
         return result;
